@@ -17,8 +17,6 @@ const deviceCatalog: { type: HomeLabDeviceType; label: string; icon: typeof Box;
 ];
 
 function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; selected: boolean; onSelect: () => void }) {
-  const color = selected ? '#60a5fa' : device.type === 'esp32' ? '#16865d' : device.type === 'lamp' ? '#fbbf24' : device.type === 'motion_sensor' ? '#a78bfa' : '#94a3b8';
-
   return (
     <group position={device.transform.position} rotation={device.transform.rotation} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
       {device.type === 'lamp' ? (
@@ -54,8 +52,6 @@ function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; sele
 
 function RoomScene() {
   const project = useHomeLabStore((state) => state.project);
-  const projectName = useHomeLabStore((state) => state.project?.name ?? 'Novo projeto residencial');
-  const renameProject = useHomeLabStore((state) => state.renameProject);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
   const room = project?.rooms[0];
@@ -84,9 +80,6 @@ function RoomScene() {
       {project?.devices.map((device) => (
         <DeviceModel key={device.id} device={device} selected={selectedDeviceId === device.id} onSelect={() => selectDevice(device.id)} />
       ))}
-      <mesh position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} onClick={() => selectDevice(null)} visible={false}>
-        <planeGeometry args={[width, depth]} /><meshBasicMaterial />
-      </mesh>
       <OrbitControls makeDefault target={[0, 1, 0]} minDistance={4} maxDistance={15} maxPolarAngle={Math.PI / 2.05} />
     </>
   );
@@ -94,6 +87,8 @@ function RoomScene() {
 
 export function HomeDesignerPage() {
   const project = useHomeLabStore((state) => state.project);
+  const projectName = useHomeLabStore((state) => state.project?.name ?? 'Novo projeto residencial');
+  const renameProject = useHomeLabStore((state) => state.renameProject);
   const setProject = useHomeLabStore((state) => state.setProject);
   const addDevice = useHomeLabStore((state) => state.addDevice);
   const removeDevice = useHomeLabStore((state) => state.removeDevice);
