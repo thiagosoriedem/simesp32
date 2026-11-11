@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Grid, Html, OrbitControls } from '@react-three/drei';
 import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wifi, Zap } from 'lucide-react';
@@ -17,11 +17,10 @@ const deviceCatalog: { type: HomeLabDeviceType; label: string; icon: typeof Box;
 ];
 
 function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; selected: boolean; onSelect: () => void }) {
-  const common = { onClick: (event: { stopPropagation: () => void }) => { event.stopPropagation(); onSelect(); } };
   const color = selected ? '#60a5fa' : device.type === 'esp32' ? '#16865d' : device.type === 'lamp' ? '#fbbf24' : device.type === 'motion_sensor' ? '#a78bfa' : '#94a3b8';
 
   return (
-    <group position={device.transform.position} rotation={device.transform.rotation} {...common}>
+    <group position={device.transform.position} rotation={device.transform.rotation} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
       {device.type === 'lamp' ? (
         <>
           <mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.055, 0.08, 0.16, 16]} /><meshStandardMaterial color="#64748b" /></mesh>
@@ -99,9 +98,9 @@ export function HomeDesignerPage() {
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
   const [projectName, setProjectName] = useState('Minha primeira residência');
-  const [roomName, setRoomName] = useState('Sala de estar');
+  const roomName = 'Sala de estar';
 
-  useMemo(() => {
+  useEffect(() => {
     if (!project) {
       setProject({
         id: PROJECT_ID,
