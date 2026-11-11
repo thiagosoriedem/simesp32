@@ -44,7 +44,7 @@ function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; sele
           <mesh position={[0, 0.17, 0.045]}><boxGeometry args={[0.045, 0.025, 0.025]} /><meshStandardMaterial color="#64748b" /></mesh>
         </>
       )}
-      {selected && <mesh position={[0, 0.025, 0]}><ringGeometry args={[0.43, 0.47, 32]} rotation={[-Math.PI / 2, 0, 0]} /><meshBasicMaterial color="#60a5fa" side={2} /></mesh>}
+      {selected && <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.43, 0.47, 32]} /><meshBasicMaterial color="#60a5fa" side={2} /></mesh>}
       <Html position={[0, 0.52, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
         <div className={`homelab-object-label ${selected ? 'is-selected' : ''}`}>{device.name}</div>
       </Html>
@@ -78,7 +78,7 @@ function RoomScene() {
         <boxGeometry args={[0.12, height, depth]} />
         <meshStandardMaterial color="#d6d3d1" roughness={0.92} />
       </mesh>
-      <Grid position={[0, 0.006, 0]} args={[width, depth]} cellSize={0.5} cellThickness={0.5} cellColor="#64748b" sectionSize={1} sectionThickness={0.8} sectionColor="#475569" fadeDistance={20} infiniteGrid={false} />
+      <Grid position={[0, 0.006, 0]} cellSize={0.5} cellThickness={0.5} cellColor="#64748b" sectionSize={1} sectionThickness={0.8} sectionColor="#475569" fadeDistance={20} infiniteGrid={false} />
       {project?.devices.map((device) => (
         <DeviceModel key={device.id} device={device} selected={selectedDeviceId === device.id} onSelect={() => selectDevice(device.id)} />
       ))}
@@ -130,7 +130,7 @@ export function HomeDesignerPage() {
     addDevice({
       id: crypto.randomUUID(),
       projectId: activeProject.id,
-      roomId: ROOM_ID,
+      roomId: activeProject.rooms[0]?.id ?? ROOM_ID,
       type,
       name: `${names[type]} ${count}`,
       transform: { position, rotation: [0, 0, 0], scale: [1, 1, 1] },
