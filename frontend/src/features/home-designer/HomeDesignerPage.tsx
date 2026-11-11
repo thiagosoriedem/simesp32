@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Grid, Html, OrbitControls } from '@react-three/drei';
 import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wifi, Zap } from 'lucide-react';
@@ -54,6 +54,8 @@ function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; sele
 
 function RoomScene() {
   const project = useHomeLabStore((state) => state.project);
+  const projectName = useHomeLabStore((state) => state.project?.name ?? 'Novo projeto residencial');
+  const renameProject = useHomeLabStore((state) => state.renameProject);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
   const room = project?.rooms[0];
@@ -97,7 +99,6 @@ export function HomeDesignerPage() {
   const removeDevice = useHomeLabStore((state) => state.removeDevice);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
-  const [projectName, setProjectName] = useState('Minha primeira residência');
   const roomName = 'Sala de estar';
 
   useEffect(() => {
@@ -151,8 +152,8 @@ export function HomeDesignerPage() {
 
       <div className="homelab-workspace">
         <aside className="homelab-sidebar">
-          <div className="homelab-sidebar-heading"><span>PROJETO</span><button type="button" title="Novo projeto" onClick={() => { setProjectName('Novo projeto residencial'); setProject({ id: crypto.randomUUID(), name: 'Novo projeto residencial', rooms: [{ id: crypto.randomUUID(), name: 'Sala de estar', width: 6, depth: 5, height: 2.8 }], devices: [], updatedAt: new Date().toISOString() }); }}><Plus size={15} /></button></div>
-          <input className="homelab-project-input" aria-label="Nome do projeto" value={projectName} onChange={(event) => setProjectName(event.target.value)} />
+          <div className="homelab-sidebar-heading"><span>PROJETO</span><button type="button" title="Novo projeto" onClick={() => { setProject({ id: crypto.randomUUID(), name: 'Novo projeto residencial', rooms: [{ id: crypto.randomUUID(), name: 'Sala de estar', width: 6, depth: 5, height: 2.8 }], devices: [], updatedAt: new Date().toISOString() }); }}><Plus size={15} /></button></div>
+          <input className="homelab-project-input" aria-label="Nome do projeto" value={projectName} onChange={(event) => renameProject(event.target.value)} />
           <div className="homelab-sidebar-heading room-heading"><span>AMBIENTES</span><button type="button" title="Adicionar ambiente" onClick={() => window.alert('A criação de múltiplos cômodos será adicionada na próxima etapa.')}><Plus size={15} /></button></div>
           <button className="homelab-room-item active" type="button"><span className="room-icon"><Box size={16} /></span><span>{roomName}</span><span className="room-count">{activeProject?.devices.length ?? 0}</span></button>
 
