@@ -24,7 +24,7 @@ Evoluir este fork do Velxio para uma plataforma de projeto e demonstração de a
 ## Arquitetura inicial
 
 - Frontend: React, TypeScript e Vite conforme a base existente.
-- Cena 3D: Three.js, React Three Fiber e Drei, após confirmar compatibilidade com as dependências atuais.
+- Cena 3D: Three.js, React Three Fiber e Drei (dependências adicionadas ao frontend).
 - Estado: aproveitar o gerenciamento de estado existente; Zustand somente se necessário.
 - Backend: preservar a API atual e estender os serviços existentes.
 - Eventos: WebSocket entre backend/adaptadores e frontend.
@@ -89,6 +89,26 @@ Criar uma sala 3D, posicionar ESP32 + PIR + lâmpada, vincular pinos, executar u
 - Verificar os termos AGPLv3/licença comercial do Velxio antes de distribuir ou oferecer hospedagem do produto.
 - Separar commits próprios do HomeLab de commits sincronizados do upstream.
 
-## Primeira entrega técnica
+## Estado da implementação
 
-A primeira entrega não deve alterar o simulador. Deve mapear a inicialização do frontend/backend, dependências, roteamento, estado, persistência e API de simulação; em seguida, propor uma integração mínima que possa ser testada sem quebrar o Velxio.
+### Entrega inicial do projetista
+
+- Rota `/homelab` registrada no React Router.
+- Cena 3D com piso, duas paredes, grade e câmera orbital.
+- Catálogo inicial: ESP32, lâmpada, sensor PIR e interruptor.
+- Modelos 3D simplificados e seleção de dispositivos na cena.
+- Painel de propriedades com edição do nome e remoção.
+- Store Zustand com criação de projeto, cômodos e dispositivos.
+- Dependências `three`, `@react-three/fiber`, `@react-three/drei` e `@types/three` adicionadas ao `frontend/package.json`.
+
+### Limitações conhecidas desta entrega
+
+- O projeto ainda vive somente no estado da aplicação; persistência local e API ainda precisam ser implementadas.
+- O botão de salvar e a criação de múltiplos ambientes ainda são placeholders.
+- Os modelos são primitivas geométricas provisórias, não modelos finais de catálogo.
+- A cena ainda não está ligada ao simulador ESP32, aos GPIOs ou ao backend.
+- A instalação de dependências, o build TypeScript e os testes ainda precisam ser executados em ambiente local.
+
+## Próxima entrega técnica
+
+Implementar persistência e edição real de ambientes (dimensões, nome, criação e remoção), depois adicionar posicionamento por clique/arraste e preparar o adaptador de eventos do simulador. Preservar o simulador original durante essas mudanças.
