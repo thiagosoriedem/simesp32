@@ -5,6 +5,7 @@ interface HomeLabStore {
   project: HomeLabProject | null;
   selectedDeviceId: string | null;
   setProject: (project: HomeLabProject) => void;
+  renameProject: (name: string) => void;
   addRoom: (room: HomeRoom) => void;
   addDevice: (device: SmartDevice) => void;
   updateDevice: (deviceId: string, patch: Partial<SmartDevice>) => void;
@@ -18,6 +19,9 @@ export const useHomeLabStore = create<HomeLabStore>((set) => ({
   selectedDeviceId: null,
 
   setProject: (project) => set({ project, selectedDeviceId: null }),
+
+  renameProject: (name) =>
+    set((state) => state.project ? ({ project: { ...state.project, name, updatedAt: new Date().toISOString() } }) : state),
 
   addRoom: (room) =>
     set((state) => {
