@@ -66,7 +66,7 @@ function RoomScene() {
       <color attach="background" args={['#111827']} />
       <ambientLight intensity={1.1} />
       <directionalLight position={[5, 8, 5]} intensity={2} castShadow />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow onClick={() => selectDevice(null)}>
         <planeGeometry args={[width, depth]} />
         <meshStandardMaterial color="#c8c4b8" roughness={0.88} />
       </mesh>
@@ -78,7 +78,7 @@ function RoomScene() {
         <boxGeometry args={[0.12, height, depth]} />
         <meshStandardMaterial color="#d6d3d1" roughness={0.92} />
       </mesh>
-      <Grid position={[0, 0.006, 0]} cellSize={0.5} cellThickness={0.5} cellColor="#64748b" sectionSize={1} sectionThickness={0.8} sectionColor="#475569" fadeDistance={20} infiniteGrid={false} />
+      <Grid position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]} args={[width, depth]} cellSize={0.5} cellThickness={0.5} cellColor="#64748b" sectionSize={1} sectionThickness={0.8} sectionColor="#475569" fadeDistance={20} infiniteGrid={false} />
       {project?.devices.map((device) => (
         <DeviceModel key={device.id} device={device} selected={selectedDeviceId === device.id} onSelect={() => selectDevice(device.id)} />
       ))}
