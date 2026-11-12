@@ -7,19 +7,21 @@ interface HousePlan2DProps {
   selectedRoomId: string | null;
   onSelectRoom: (id: string) => void;
   onUpdateRoom: (id: string, position: { x: number; z: number }) => void;
+  onResizeRoom: (id: string, patch: { width: number; depth: number; position: { x: number; z: number } }) => void;
   onUpdateOpening: (roomId: string, openingId: string, offset: number) => void;
 }
 
 type DragMapping = { scale: number; originX: number; originY: number; zoom: number; panX: number; panY: number };
 type DragState =
   | ({ kind: 'room'; roomId: string; start: { x: number; z: number }; origin: { x: number; z: number } } & DragMapping)
+  | ({ kind: 'resize'; roomId: string; edge: 'east' | 'west' | 'north' | 'south'; start: { x: number; z: number }; width: number; depth: number; position: { x: number; z: number } } & DragMapping)
   | ({ kind: 'opening'; roomId: string; openingId: string; wall: WallSide } & DragMapping)
   | ({ kind: 'pan'; startX: number; startY: number; originPanX: number; originPanY: number } & DragMapping)
   | null;
 
 const GRID = 0.25;
 
-export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom, onUpdateOpening }: HousePlan2DProps) {
+export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom, onResizeRoom, onUpdateOpening }: HousePlan2DProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState>(null);
   const [zoom, setZoom] = useState(1);
@@ -85,6 +87,24 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     }
     const point = toWorld(event, drag);
     if (!point) return;
+    if (drag.kind === 'resize') {
+      const room = rooms.find((entry) => entry.id === drag.roomId);
+      if (!room) return;
+      const dx = point.x - drag.start.x;
+      const dz = point.z - drag.start.z;
+      const width = Math.max(1, Math.round((drag.width + (drag.edge === 'east' ? dx : drag.edge === 'west' ? -dx : 0)) / GRID) * GRID);
+      const depth = Math.max(1, Math.round((drag.depth + (drag.edge === 'south' ? dz : drag.edge === 'north' ? -dz : 0)) / GRID) * GRID);
+      const shiftX = drag.edge === 'east' ? (width - drag.width) / 2 : drag.edge === 'west' ? -(width - drag.width) / 2 : 0;
+      const shiftZ = drag.edge === 'south' ? (depth - drag.depth) / 2 : drag.edge === 'north' ? -(depth - drag.depth) / 2 : 0;
+      const position = { x: Math.round((drag.position.x + shiftX) / GRID) * GRID, z: Math.round((drag.position.z + shiftZ) / GRID) * GRID };
+      const overlapsRoom = rooms.some((other) => {
+        if (other.id === room.id) return false;
+        const ox = other.position?.x ?? 0; const oz = other.position?.z ?? 0;
+        return Math.abs(position.x - ox) < (width + other.width) / 2 - 0.02 && Math.abs(position.z - oz) < (depth + other.depth) / 2 - 0.02;
+      });
+      if (!overlapsRoom) onResizeRoom(room.id, { width, depth, position });
+      return;
+    }
     if (drag.kind === 'room') {
       const x = Math.round((drag.origin.x + point.x - drag.start.x) / GRID) * GRID;
       const z = Math.round((drag.origin.z + point.z - drag.start.z) / GRID) * GRID;
@@ -113,6 +133,15 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     const collides = (room.openings ?? []).some((other) => other.id !== opening.id && other.wall === drag.wall
       && Math.abs(snappedOffset - other.offset) < (opening.width + other.width) / 2 + 0.05);
     if (!collides) onUpdateOpening(room.id, opening.id, snappedOffset);
+  };
+
+  const pointerDownResize = (event: ReactPointerEvent<SVGCircleElement>, room: HomeRoom, edge: 'east' | 'west' | 'north' | 'south') => {
+    event.stopPropagation();
+    onSelectRoom(room.id);
+    const point = toWorld(event as unknown as ReactPointerEvent<SVGSVGElement>);
+    if (!point) return;
+    dragRef.current = { kind: 'resize', roomId: room.id, edge, start: point, width: room.width, depth: room.depth, position: { x: room.position?.x ?? 0, z: room.position?.z ?? 0 }, ...mappingNow() };
+    svgRef.current?.setPointerCapture(event.pointerId);
   };
 
   const renderOpening = (room: HomeRoom, opening: RoomOpening) => {
@@ -168,6 +197,23 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
               <text x={px(x)} y={py(z) - 5} textAnchor="middle" fill="#172334" fontSize="15" fontWeight="700" pointerEvents="none">{room.name}</text>
               <text x={px(x)} y={py(z) + 16} textAnchor="middle" fill="#334155" fontSize="11" pointerEvents="none">{room.width.toFixed(1)} × {room.depth.toFixed(1)} m</text>
               {(room.openings ?? []).map((opening) => renderOpening(room, opening))}
+              <g pointerEvents="none" fill="#93c5fd" stroke="#93c5fd" fontSize="11">
+                <line x1={px(x - room.width / 2)} y1={py(z - room.depth / 2) - 18} x2={px(x + room.width / 2)} y2={py(z - room.depth / 2) - 18} strokeWidth="1" />
+                <line x1={px(x - room.width / 2)} y1={py(z - room.depth / 2) - 23} x2={px(x - room.width / 2)} y2={py(z - room.depth / 2) - 13} />
+                <line x1={px(x + room.width / 2)} y1={py(z - room.depth / 2) - 23} x2={px(x + room.width / 2)} y2={py(z - room.depth / 2) - 13} />
+                <text x={px(x)} y={py(z - room.depth / 2) - 23} textAnchor="middle" stroke="none" fill="#bfdbfe">{room.width.toFixed(2)} m</text>
+                <line x1={px(x + room.width / 2) + 18} y1={py(z - room.depth / 2)} x2={px(x + room.width / 2) + 18} y2={py(z + room.depth / 2)} strokeWidth="1" />
+                <line x1={px(x + room.width / 2) + 13} y1={py(z - room.depth / 2)} x2={px(x + room.width / 2) + 23} y2={py(z - room.depth / 2)} />
+                <line x1={px(x + room.width / 2) + 13} y1={py(z + room.depth / 2)} x2={px(x + room.width / 2) + 23} y2={py(z + room.depth / 2)} />
+                <text x={px(x + room.width / 2) + 25} y={py(z)} textAnchor="middle" stroke="none" fill="#bfdbfe" transform={`rotate(90 ${px(x + room.width / 2) + 25} ${py(z)})`}>{room.depth.toFixed(2)} m</text>
+              </g>
+              {selected && <g>
+                <circle cx={px(x + room.width / 2)} cy={py(z)} r="7" fill="#60a5fa" stroke="#dbeafe" strokeWidth="2" style={{cursor:'ew-resize',touchAction:'none'}} onPointerDown={(event) => pointerDownResize(event, room, 'east')} />
+                <circle cx={px(x - room.width / 2)} cy={py(z)} r="7" fill="#60a5fa" stroke="#dbeafe" strokeWidth="2" style={{cursor:'ew-resize',touchAction:'none'}} onPointerDown={(event) => pointerDownResize(event, room, 'west')} />
+                <circle cx={px(x)} cy={py(z + room.depth / 2)} r="7" fill="#60a5fa" stroke="#dbeafe" strokeWidth="2" style={{cursor:'ns-resize',touchAction:'none'}} onPointerDown={(event) => pointerDownResize(event, room, 'south')} />
+                <circle cx={px(x)} cy={py(z - room.depth / 2)} r="7" fill="#60a5fa" stroke="#dbeafe" strokeWidth="2" style={{cursor:'ns-resize',touchAction:'none'}} onPointerDown={(event) => pointerDownResize(event, room, 'north')} />
+              </g>}
+
             </g>
           );
         })}
@@ -178,7 +224,7 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
         <span><i className="legend-furniture" /> Cômodos</span>
         <span><i className="legend-door" /> Portas</span>
         <span><i className="legend-window" /> Janelas</span>
-        <small>Arraste um cômodo para reorganizar · arraste uma abertura para reposicionar · grade de 25 cm</small>
+        <small>Arraste cômodos e aberturas · use os puxadores azuis para redimensionar · grade de 25 cm</small>
       </div>
     </div>
   );
