@@ -151,6 +151,25 @@ export function HomeDesignerPage() {
     }
   }, [project, setProject]);
 
+  useEffect(() => {
+    if (!project || project.rooms.every((room) => room.position)) return;
+    const maxWidth = Math.max(...project.rooms.map((room) => room.width), 4);
+    const maxDepth = Math.max(...project.rooms.map((room) => room.depth), 4);
+    const columns = Math.min(2, project.rooms.length);
+    const rows = Math.ceil(project.rooms.length / Math.max(columns, 1));
+    project.rooms.forEach((room, index) => {
+      if (room.position) return;
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      updateRoom(room.id, {
+        position: {
+          x: column * (maxWidth + 1.5) - ((columns - 1) * (maxWidth + 1.5)) / 2,
+          z: row * (maxDepth + 1.5) - ((rows - 1) * (maxDepth + 1.5)) / 2,
+        },
+      });
+    });
+  }, [project, updateRoom]);
+
   const activeProject = project;
   const activeRoom = activeProject?.rooms.find((room) => room.id === selectedRoomId) ?? activeProject?.rooms[0] ?? null;
   const roomName = activeRoom?.name ?? 'Ambiente';
