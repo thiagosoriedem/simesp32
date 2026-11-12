@@ -21,6 +21,8 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Alternância entre edição individual e visão geral da residência.
 - Planta geral automática em grade de até duas colunas, com cômodos identificados e dispositivos exibidos em seus ambientes.
 - Seleção de cômodos e dispositivos na visão geral; transformações continuam disponíveis no modo de edição individual.
+- Paredes nos quatro lados dos ambientes, com geometrias vazadas para portas e janelas.
+- Adição e remoção de portas e janelas na parede norte, com medidas iniciais e persistência local.
 
 ## Dependências
 
@@ -28,17 +30,19 @@ As dependências 3D estão declaradas em `frontend/package.json`. No diretório 
 
 ## Próximos passos
 
-1. API de projetos e sincronização entre dispositivos.
-2. Melhorar o posicionamento com encaixe à grade, limites do cômodo e arrastar diretamente sobre o piso.
-3. Biblioteca com modelos 3D residenciais mais detalhados.
-4. Vínculo ESP32/GPIO e eventos do simulador.
-5. Validação local de TypeScript, build e testes.
+1. Editor de aberturas com escolha de parede, posição e dimensões.
+2. Planta conjunta com posicionamento manual e conexão entre cômodos.
+3. Melhorar o posicionamento com encaixe à grade, limites do cômodo e arrastar diretamente sobre o piso.
+4. Biblioteca com modelos 3D residenciais mais detalhados.
+5. Vínculo ESP32/GPIO e eventos do simulador.
+6. API de projetos e sincronização entre dispositivos.
 
 A cena não se comunica diretamente com QEMU. A futura integração deverá passar pela camada de adaptadores e eventos descrita em `docs/HOMELAB_FOUNDATION.md`.
 
 ## Limitações atuais
 
-- A visão geral organiza cômodos em uma grade automática para visualização; isso não representa ainda paredes compartilhadas, adjacência arquitetônica ou portas de conexão.
+- A visão geral organiza cômodos em uma grade automática; as portas e janelas são aberturas internas de cada cômodo, ainda sem conexão física entre cômodos.
+- Nesta primeira versão, novas aberturas são criadas na parede norte com dimensões padrão; ainda não há editor de parede, posição ou dimensões.
 - O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
 - Os modelos 3D são primitivas provisórias.
 - A transformação é feita pelo gizmo de eixos; ainda não há encaixe físico aos limites do cômodo nem prevenção de colisões.
