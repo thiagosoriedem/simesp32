@@ -227,7 +227,9 @@ export function HomeDesignerPage() {
           <div className="homelab-scene-toolbar">
             <div><span className="breadcrumb-muted">Projetos</span><span className="breadcrumb-separator">/</span><strong>{houseOverview ? 'Visão da casa' : roomName}</strong></div>
             <div className="scene-tools">
-              <div className="homelab-view-toggle" role="group" aria-label="Modo de visualização">\n                <button type="button" className={!houseOverview ? 'active' : ''} onClick={() => setHouseOverview(false)}>Editar cômodo</button>\n                <button type="button" className={houseOverview ? 'active' : ''} onClick={() => { setHouseOverview(true); selectDevice(null); }}>Visão da casa</button>\n              </div>\n              {selectedDevice && !houseOverview && (
+              <div className="homelab-view-toggle" role="group" aria-label="Modo de visualização">
+                <button type="button" className={!houseOverview ? 'active' : ''} onClick={() => setHouseOverview(false)}>Editar cômodo</button>
+                <button type="button" className={houseOverview ? 'active' : ''} onClick={() => { setHouseOverview(true); selectDevice(null); }}>Visão da casa</button>\n              </div>\n              {selectedDevice && !houseOverview && (
                 <div className="homelab-transform-tools" role="group" aria-label="Ferramenta de transformação">
                   <button type="button" className={transformMode === 'translate' ? 'active' : ''} onClick={() => setTransformMode('translate')}>Mover</button>
                   <button type="button" className={transformMode === 'rotate' ? 'active' : ''} onClick={() => setTransformMode('rotate')}>Girar</button>
