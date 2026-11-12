@@ -32,3 +32,5 @@
 .homelab-mount-editor small{color:#718198;font-size:8px;line-height:1.45}
 
 .icon-furniture{color:#e8c59b;background:#493526}
+
+.homelab-sidebar{overflow-y:auto;overscroll-behavior:contain}.homelab-inspector{overflow-y:auto;overscroll-behavior:contain}
