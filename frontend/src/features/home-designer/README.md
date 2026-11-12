@@ -19,7 +19,8 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Salvamento automático do estado no armazenamento local do navegador via persist middleware do Zustand.
 
 - Alternância entre edição individual e visão geral da residência.
-- Planta geral automática em grade de até duas colunas, com cômodos identificados e dispositivos exibidos em seus ambientes.
+- Planta geral com posicionamento persistente por coordenadas X/Z; cômodos antigos sem coordenadas recebem posições de fallback em grade.
+- Campos de posição X/Z no inspetor para organizar manualmente os cômodos e aproximar/encostar ambientes.
 - Seleção de cômodos e dispositivos na visão geral; transformações continuam disponíveis no modo de edição individual.
 - Paredes nos quatro lados dos ambientes, com geometrias vazadas para portas e janelas.
 - Adição, remoção e edição de portas e janelas nas quatro paredes.
@@ -32,7 +33,7 @@ As dependências 3D estão declaradas em `frontend/package.json`. No diretório 
 
 ## Próximos passos
 
-1. Planta conjunta com posicionamento manual e conexão entre cômodos.
+1. Detectar e representar conexões arquitetônicas entre portas de cômodos adjacentes, incluindo alinhamento de aberturas.
 2. Melhorar o posicionamento de dispositivos com encaixe à grade, limites do cômodo e arrastar diretamente sobre o piso.
 3. Biblioteca com modelos 3D residenciais mais detalhados.
 4. Vínculo ESP32/GPIO e eventos do simulador.
@@ -42,7 +43,7 @@ A cena não se comunica diretamente com QEMU. A futura integração deverá pass
 
 ## Limitações atuais
 
-- A visão geral organiza cômodos em uma grade automática; as portas e janelas são aberturas internas de cada cômodo, ainda sem conexão física entre cômodos.
+- A posição dos cômodos é manual por coordenadas; ainda não existe detecção automática de adjacência, conexão de portas ou remoção de paredes compartilhadas.
 - A edição de aberturas limita dimensões e posição à parede; ainda não há validação de colisão entre duas aberturas sobrepostas.
 - O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
 - Os modelos 3D são primitivas provisórias.
