@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { HomeRoom, RoomOpening, WallSide } from './types';
 
@@ -10,10 +10,11 @@ interface HousePlan2DProps {
   onUpdateOpening: (roomId: string, openingId: string, offset: number) => void;
 }
 
-type DragMapping = { scale: number; originX: number; originY: number };
+type DragMapping = { scale: number; originX: number; originY: number; zoom: number; panX: number; panY: number };
 type DragState =
   | ({ kind: 'room'; roomId: string; start: { x: number; z: number }; origin: { x: number; z: number } } & DragMapping)
   | ({ kind: 'opening'; roomId: string; openingId: string; wall: WallSide } & DragMapping)
+  | ({ kind: 'pan'; startX: number; startY: number; originPanX: number; originPanY: number } & DragMapping)
   | null;
 
 const GRID = 0.25;
@@ -21,6 +22,8 @@ const GRID = 0.25;
 export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom, onUpdateOpening }: HousePlan2DProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const bounds = useMemo(() => {
     if (!rooms.length) return { minX: -5, maxX: 5, minZ: -4, maxZ: 4 };
     const minX = Math.min(...rooms.map((room) => (room.position?.x ?? 0) - room.width / 2)) - 1.5;
@@ -35,7 +38,9 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
   const px = (x: number) => originX + x * scale;
   const py = (z: number) => originY + z * scale;
 
-  const toWorld = (event: ReactPointerEvent<SVGSVGElement>, mapping: DragMapping = { scale, originX, originY }) => {
+  const mappingNow = (): DragMapping => ({ scale, originX, originY, zoom, panX: pan.x, panY: pan.y });
+
+  const toWorld = (event: ReactPointerEvent<SVGSVGElement>, mapping: DragMapping = mappingNow()) => {
     const svg = svgRef.current;
     const matrix = svg?.getScreenCTM();
     if (!svg || !matrix) return null;
@@ -43,7 +48,7 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     point.x = event.clientX;
     point.y = event.clientY;
     const local = point.matrixTransform(matrix.inverse());
-    return { x: (local.x - mapping.originX) / mapping.scale, z: (local.y - mapping.originY) / mapping.scale };
+    return { x: (local.x - mapping.panX) / mapping.zoom / mapping.scale - mapping.originX / mapping.scale, z: (local.y - mapping.panY) / mapping.zoom / mapping.scale - mapping.originY / mapping.scale };
   };
 
   const pointerDownRoom = (event: ReactPointerEvent<SVGGElement>, room: HomeRoom) => {
@@ -54,7 +59,7 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     dragRef.current = {
       kind: 'room', roomId: room.id, start: point,
       origin: { x: room.position?.x ?? 0, z: room.position?.z ?? 0 },
-      scale, originX, originY,
+      ...mappingNow(),
     };
     svgRef.current?.setPointerCapture(event.pointerId);
   };
@@ -62,13 +67,22 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
   const pointerDownOpening = (event: ReactPointerEvent<SVGElement>, room: HomeRoom, opening: RoomOpening) => {
     event.stopPropagation();
     onSelectRoom(room.id);
-    dragRef.current = { kind: 'opening', roomId: room.id, openingId: opening.id, wall: opening.wall, scale, originX, originY };
+    dragRef.current = { kind: 'opening', roomId: room.id, openingId: opening.id, wall: opening.wall, ...mappingNow() };
     svgRef.current?.setPointerCapture(event.pointerId);
   };
 
   const pointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
     const drag = dragRef.current;
     if (!drag) return;
+    if (drag.kind === 'pan') {
+      const svg = svgRef.current;
+      const matrix = svg?.getScreenCTM();
+      if (!svg || !matrix) return;
+      const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
+      const local = point.matrixTransform(matrix.inverse());
+      setPan({ x: drag.originPanX + local.x - drag.startX, y: drag.originPanY + local.y - drag.startY });
+      return;
+    }
     const point = toWorld(event, drag);
     if (!point) return;
     if (drag.kind === 'room') {
@@ -113,16 +127,35 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     return <line key={opening.id} x1={px(cx - room.width / 2)} y1={py(cz + opening.offset - half)} x2={px(cx - room.width / 2)} y2={py(cz + opening.offset + half)} {...common} onPointerDown={(event) => pointerDownOpening(event, room, opening)} />;
   };
 
+  const beginPan = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (event.target !== event.currentTarget) return;
+    const svg = svgRef.current; const matrix = svg?.getScreenCTM();
+    if (!svg || !matrix) return;
+    const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
+    const local = point.matrixTransform(matrix.inverse());
+    dragRef.current = { kind: 'pan', startX: local.x, startY: local.y, originPanX: pan.x, originPanY: pan.y, ...mappingNow() };
+    svg.setPointerCapture(event.pointerId);
+  };
+
+  const changeZoom = (factor: number) => setZoom((current) => Math.max(0.35, Math.min(3, current * factor)));
+
   return (
     <div className="homelab-plan2d homelab-house-plan2d">
+      <div className="homelab-plan-controls">
+        <button type="button" onClick={() => changeZoom(1.2)} aria-label="Aumentar zoom">+</button>
+        <span>{Math.round(zoom * 100)}%</span>
+        <button type="button" onClick={() => changeZoom(1 / 1.2)} aria-label="Diminuir zoom">−</button>
+        <button type="button" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>Enquadrar</button>
+      </div>
       <svg ref={svgRef} viewBox="0 0 1000 690" role="img" aria-label="Planta baixa geral da residência"
-        onPointerMove={pointerMove} onPointerUp={() => { dragRef.current = null; }} onPointerCancel={() => { dragRef.current = null; }}>
+        onPointerDown={beginPan} onPointerMove={pointerMove} onPointerUp={() => { dragRef.current = null; }} onPointerCancel={() => { dragRef.current = null; }}>
         <defs>
           <pattern id="homelab-house-grid" width={scale * GRID} height={scale * GRID} patternUnits="userSpaceOnUse">
             <path d={`M ${scale * GRID} 0 L 0 0 0 ${scale * GRID}`} fill="none" stroke="#26364b" strokeWidth="0.7" />
           </pattern>
         </defs>
         <rect width="1000" height="690" fill="#0d1626" />
+        <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
         <rect width="1000" height="690" fill="url(#homelab-house-grid)" />
         {rooms.map((room) => {
           const x = room.position?.x ?? 0;
@@ -138,7 +171,8 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
             </g>
           );
         })}
-        <text x="500" y="28" textAnchor="middle" fill="#e2e8f0" fontSize="15" fontWeight="600">Planta geral · {rooms.length} ambientes</text>
+        </g>
+        <text x="500" y="28" textAnchor="middle" fill="#e2e8f0" fontSize="15" fontWeight="600" pointerEvents="none">Planta geral · {rooms.length} ambientes</text>
       </svg>
       <div className="homelab-plan-legend">
         <span><i className="legend-furniture" /> Cômodos</span>
