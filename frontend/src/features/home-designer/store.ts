@@ -52,6 +52,7 @@ export const useHomeLabStore = create<HomeLabStore>()(persist((set) => ({
         },
         selectedRoomId: room.id,
         selectedDeviceId: null,
+        selectedFurnitureId: null,
       };
     }),
 
@@ -85,6 +86,7 @@ export const useHomeLabStore = create<HomeLabStore>()(persist((set) => ({
           devices: [...state.project.devices, device],
           updatedAt: new Date().toISOString(),
         },
+        selectedFurnitureId: null,
       };
     }),
 
