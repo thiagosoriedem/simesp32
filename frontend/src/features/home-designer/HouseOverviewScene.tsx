@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Html, OrbitControls } from '@react-three/drei';
 import { useHomeLabStore } from './store';
-import type { HomeRoom, SmartDevice } from './types';
+import type { HomeRoom, SmartDevice, WallSide } from './types';
 import { RoomArchitecture } from './RoomArchitecture';
 
 type RoomPlacement = { room: HomeRoom; x: number; z: number };
+type WallConnection = { firstRoomId: string; firstSide: WallSide; secondRoomId: string; secondSide: WallSide; ownerRoomId: string };
 
 function getRoomPlacements(rooms: HomeRoom[]): RoomPlacement[] {
   if (!rooms.length) return [];
@@ -21,6 +22,79 @@ function getRoomPlacements(rooms: HomeRoom[]): RoomPlacement[] {
       z: room.position?.z ?? row * (maxDepth + 1.5) - ((rows - 1) * (maxDepth + 1.5)) / 2,
     };
   });
+}
+
+function findWallConnections(placements: RoomPlacement[]): WallConnection[] {
+  const connections: WallConnection[] = [];
+  const tolerance = 0.08;
+
+  for (let i = 0; i < placements.length; i += 1) {
+    for (let j = i + 1; j < placements.length; j += 1) {
+      const a = placements[i];
+      const b = placements[j];
+      const aLeft = a.x - a.room.width / 2;
+      const aRight = a.x + a.room.width / 2;
+      const aTop = a.z - a.room.depth / 2;
+      const aBottom = a.z + a.room.depth / 2;
+      const bLeft = b.x - b.room.width / 2;
+      const bRight = b.x + b.room.width / 2;
+      const bTop = b.z - b.room.depth / 2;
+      const bBottom = b.z + b.room.depth / 2;
+
+      let sideA: WallSide | null = null;
+      let sideB: WallSide | null = null;
+      let overlapStart = 0;
+      let overlapEnd = 0;
+      let axis: 'x' | 'z' = 'x';
+
+      if (Math.abs(aRight - bLeft) <= tolerance || Math.abs(bRight - aLeft) <= tolerance) {
+        const aIsLeft = Math.abs(aRight - bLeft) <= tolerance;
+        sideA = aIsLeft ? 'east' : 'west';
+        sideB = aIsLeft ? 'west' : 'east';
+        overlapStart = Math.max(aTop, bTop);
+        overlapEnd = Math.min(aBottom, bBottom);
+        axis = 'z';
+      } else if (Math.abs(aBottom - bTop) <= tolerance || Math.abs(bBottom - aTop) <= tolerance) {
+        const aIsTop = Math.abs(aBottom - bTop) <= tolerance;
+        sideA = aIsTop ? 'south' : 'north';
+        sideB = aIsTop ? 'north' : 'south';
+        overlapStart = Math.max(aLeft, bLeft);
+        overlapEnd = Math.min(aRight, bRight);
+        axis = 'x';
+      }
+
+      if (!sideA || !sideB || overlapEnd - overlapStart < 0.5) continue;
+
+      const candidates = [
+        { room: a, side: sideA, center: axis === 'x' ? a.x : a.z },
+        { room: b, side: sideB, center: axis === 'x' ? b.x : b.z },
+      ];
+      let ownerRoomId: string | null = null;
+      for (const candidate of candidates) {
+        const door = (candidate.room.openings ?? []).find((opening) => {
+          if (opening.type !== 'door' || opening.wall !== candidate.side) return false;
+          const worldCenter = candidate.center + opening.offset;
+          return worldCenter - opening.width / 2 >= overlapStart - tolerance
+            && worldCenter + opening.width / 2 <= overlapEnd + tolerance;
+        });
+        if (door) {
+          ownerRoomId = candidate.room.id;
+          break;
+        }
+      }
+
+      if (ownerRoomId) {
+        connections.push({
+          firstRoomId: a.room.id,
+          firstSide: sideA,
+          secondRoomId: b.room.id,
+          secondSide: sideB,
+          ownerRoomId,
+        });
+      }
+    }
+  }
+  return connections;
 }
 
 function OverviewDevice({ device, offsetX, offsetZ, selected, onSelect }: {
@@ -65,6 +139,21 @@ export function HouseOverviewScene() {
   const selectRoom = useHomeLabStore((state) => state.selectRoom);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
   const placements = useMemo(() => getRoomPlacements(project?.rooms ?? []), [project?.rooms]);
+  const connections = useMemo(() => findWallConnections(placements), [placements]);
+  const hiddenWalls = useMemo(() => {
+    const result = new Map<string, WallSide[]>();
+    connections.forEach((connection) => {
+      const hiddenRoomId = connection.ownerRoomId === connection.firstRoomId
+        ? connection.secondRoomId
+        : connection.firstRoomId;
+      const hiddenSide = connection.ownerRoomId === connection.firstRoomId
+        ? connection.secondSide
+        : connection.firstSide;
+      result.set(hiddenRoomId, [...(result.get(hiddenRoomId) ?? []), hiddenSide]);
+    });
+    return result;
+  }, [connections]);
+
   const minX = Math.min(...placements.map(({ room, x }) => x - room.width / 2), -5);
   const maxX = Math.max(...placements.map(({ room, x }) => x + room.width / 2), 5);
   const minZ = Math.min(...placements.map(({ room, z }) => z - room.depth / 2), -5);
@@ -84,7 +173,7 @@ export function HouseOverviewScene() {
             <boxGeometry args={[room.width, 0.05, room.depth]} />
             <meshStandardMaterial color={room.id === selectedRoomId ? '#d7e3ef' : '#b9c4cf'} roughness={0.9} />
           </mesh>
-          <RoomArchitecture room={room} />
+          <RoomArchitecture room={room} hiddenWalls={hiddenWalls.get(room.id) ?? []} />
           <mesh position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[room.width, room.depth]} />
             <meshBasicMaterial color="#64748b" wireframe transparent opacity={0.22} />
