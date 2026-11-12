@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Shape, Path, ExtrudeGeometry } from 'three';
+import { DoubleSide, Shape, Path, ExtrudeGeometry } from 'three';
 import type { HomeRoom, RoomOpening, WallSide } from './types';
 
 function Wall({ room, side }: { room: HomeRoom; side: WallSide }) {
@@ -28,7 +28,9 @@ function Wall({ room, side }: { room: HomeRoom; side: WallSide }) {
       shape.holes.push(hole);
     });
 
-    return new ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: false, curveSegments: 1 });
+    const wallGeometry = new ExtrudeGeometry(shape, { depth: 0.16, steps: 1, bevelEnabled: false, curveSegments: 1 });
+    wallGeometry.computeVertexNormals();
+    return wallGeometry;
   }, [length, room.height, openings]);
 
   const position: [number, number, number] = side === 'north'
@@ -41,7 +43,7 @@ function Wall({ room, side }: { room: HomeRoom; side: WallSide }) {
   const rotation: [number, number, number] = side === 'east' || side === 'west' ? [0, Math.PI / 2, 0] : [0, 0, 0];
 
   return <mesh geometry={geometry} position={position} rotation={rotation} castShadow receiveShadow>
-    <meshStandardMaterial color="#e7e5e4" roughness={0.92} side={2} />
+    <meshStandardMaterial color="#e7e5e4" roughness={0.92} metalness={0} side={DoubleSide} transparent={false} opacity={1} depthWrite />
   </mesh>;
 }
 
