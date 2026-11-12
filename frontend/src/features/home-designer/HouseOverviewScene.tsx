@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Html, OrbitControls } from '@react-three/drei';
 import { useHomeLabStore } from './store';
-import type { HomeRoom, SmartDevice, WallSide } from './types';
+import type { HomeFurniture, HomeRoom, SmartDevice, WallSide } from './types';
 import { RoomArchitecture } from './RoomArchitecture';
 
 type RoomPlacement = { room: HomeRoom; x: number; z: number };
@@ -113,6 +113,26 @@ function getOverviewDeviceTransform(device: SmartDevice, room: HomeRoom) {
   return { ...device.transform, position, rotation: [0, yaw, 0] as [number, number, number] };
 }
 
+function OverviewFurniture({ item, selected, onSelect }: { item: HomeFurniture; selected: boolean; onSelect: () => void }) {
+  const { width, depth, height } = item.size;
+  return (
+    <group position={item.transform.position} rotation={item.transform.rotation} scale={item.transform.scale}
+      onClick={(event) => { event.stopPropagation(); onSelect(); }}>
+      <mesh position={[0, height / 2, 0]}>
+        <boxGeometry args={[width, height, depth]} />
+        <meshStandardMaterial color={item.type === 'sofa' ? '#647f91' : item.type === 'bed' ? '#b8c5d2' : item.type === 'refrigerator' ? '#dbe4ea' : '#9a7555'} />
+      </mesh>
+      {selected && <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[Math.max(width, depth) * 0.48, Math.max(width, depth) * 0.52, 24]} />
+        <meshBasicMaterial color="#60a5fa" side={2} />
+      </mesh>}
+      <Html position={[0, height + 0.12, 0]} center distanceFactor={13} style={{ pointerEvents: 'none' }}>
+        <div className={`homelab-object-label ${selected ? 'is-selected' : ''}`}>{item.name}</div>
+      </Html>
+    </group>
+  );
+}
+
 function OverviewDevice({ device, room, offsetX, offsetZ, selected, onSelect }: {
   device: SmartDevice;
   room: HomeRoom;
@@ -159,9 +179,11 @@ function OverviewDevice({ device, room, offsetX, offsetZ, selected, onSelect }: 
 export function HouseOverviewScene() {
   const project = useHomeLabStore((state) => state.project);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
+  const selectedFurnitureId = useHomeLabStore((state) => state.selectedFurnitureId);
   const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
   const selectRoom = useHomeLabStore((state) => state.selectRoom);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
+  const selectFurniture = useHomeLabStore((state) => state.selectFurniture);
   const placements = useMemo(() => getRoomPlacements(project?.rooms ?? []), [project?.rooms]);
   const connections = useMemo(() => findWallConnections(placements), [placements]);
   const hiddenWalls = useMemo(() => {
@@ -193,7 +215,7 @@ export function HouseOverviewScene() {
       <directionalLight position={[8, 12, 7]} intensity={2} castShadow />
       {placements.map(({ room, x, z }) => (
         <group key={room.id} position={[x, 0, z]}>
-          <mesh position={[0, -0.025, 0]} receiveShadow onClick={() => { selectRoom(room.id); selectDevice(null); }}>
+          <mesh position={[0, -0.025, 0]} receiveShadow onClick={() => { selectRoom(room.id); selectDevice(null); selectFurniture(null); }}>
             <boxGeometry args={[room.width, 0.05, room.depth]} />
             <meshStandardMaterial color={room.id === selectedRoomId ? '#d7e3ef' : '#b9c4cf'} roughness={0.9} />
           </mesh>
@@ -205,6 +227,10 @@ export function HouseOverviewScene() {
           <Html position={[0, room.height + 0.18, 0]} center distanceFactor={18} style={{ pointerEvents: 'none' }}>
             <div className="homelab-room-label">{room.name}</div>
           </Html>
+          {(project?.furniture ?? []).filter((item) => item.roomId === room.id).map((item) => (
+            <OverviewFurniture key={item.id} item={item} selected={selectedFurnitureId === item.id}
+              onSelect={() => { selectRoom(room.id); selectFurniture(item.id); }} />
+          ))}
           {(project?.devices ?? []).filter((device) => device.roomId === room.id).map((device) => (
             <OverviewDevice
               key={device.id}
