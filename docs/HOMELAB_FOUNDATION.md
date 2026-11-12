@@ -101,9 +101,18 @@ Criar uma sala 3D, posicionar ESP32 + PIR + lâmpada, vincular pinos, executar u
 - Store Zustand com criação de projeto, cômodos e dispositivos.
 - Dependências `three`, `@react-three/fiber`, `@react-three/drei` e `@types/three` adicionadas ao `frontend/package.json`.
 
+### Visão geral da residência
+
+- Alternância entre edição de um cômodo e visão geral da casa.
+- Cômodos exibidos simultaneamente em uma grade automática de até duas colunas.
+- Rótulos de cômodos e dispositivos apresentados na planta geral.
+- Seleção de cômodo/dispositivo na visão geral; o gizmo de transformação permanece restrito à edição individual.
+- A disposição é apenas uma organização visual automática, não um projeto arquitetônico com adjacências ou paredes compartilhadas.
+
 ### Limitações conhecidas desta entrega
 
-- O projeto ainda vive somente no estado da aplicação; persistência local e API ainda precisam ser implementadas.
+- A visão geral ainda não modela adjacência real entre cômodos, portas, janelas ou paredes compartilhadas.
+- O projeto ainda não possui API ou sincronização em nuvem.
 - O botão de salvar e a criação de múltiplos ambientes ainda são placeholders.
 - Os modelos são primitivas geométricas provisórias, não modelos finais de catálogo.
 - A cena ainda não está ligada ao simulador ESP32, aos GPIOs ou ao backend.
