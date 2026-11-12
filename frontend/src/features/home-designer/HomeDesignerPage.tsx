@@ -85,13 +85,29 @@ function DeviceModel({ device, transform, selected, onSelect, transformMode, onT
           <mesh position={[0, 0.1, 0]}><boxGeometry args={[0.32, 0.18, 0.24]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
           <mesh position={[0, 0.12, 0.13]}><sphereGeometry args={[0.09, 18, 18]} /><meshStandardMaterial color="#a78bfa" roughness={0.2} /></mesh>
         </>
+      ) : device.type === 'television' ? (
+        <>
+          <mesh position={[0, 0.08, 0]}><boxGeometry args={[1.2, 0.72, 0.07]} /><meshStandardMaterial color="#111827" metalness={0.35} roughness={0.25} /></mesh>
+          <mesh position={[0, 0.08, 0.041]}><boxGeometry args={[1.12, 0.64, 0.008]} /><meshStandardMaterial color="#172b45" emissive="#0b1d35" emissiveIntensity={0.25} /></mesh>
+        </>
+      ) : device.type === 'air_conditioner' ? (
+        <>
+          <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.95, 0.25, 0.22]} /><meshStandardMaterial color="#f1f5f9" roughness={0.45} /></mesh>
+          <mesh position={[0, -0.015, 0.105]}><boxGeometry args={[0.78, 0.025, 0.025]} /><meshStandardMaterial color="#64748b" /></mesh>
+        </>
+      ) : device.type === 'outlet' ? (
+        <>
+          <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.22, 0.16, 0.035]} /><meshStandardMaterial color="#f8fafc" /></mesh>
+          <mesh position={[-0.035, 0.08, 0.021]}><boxGeometry args={[0.018, 0.055, 0.008]} /><meshStandardMaterial color="#475569" /></mesh>
+          <mesh position={[0.035, 0.08, 0.021]}><boxGeometry args={[0.018, 0.055, 0.008]} /><meshStandardMaterial color="#475569" /></mesh>
+        </>
       ) : (
         <>
-          <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.22, 0.16, 0.08]} /><meshStandardMaterial color="#f1f5f9" /></mesh>
-          <mesh position={[0, 0.17, 0.045]}><boxGeometry args={[0.045, 0.025, 0.025]} /><meshStandardMaterial color="#64748b" /></mesh>
+          <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.22, 0.16, 0.035]} /><meshStandardMaterial color="#f1f5f9" /></mesh>
+          <mesh position={[0, 0.08, 0.025]}><boxGeometry args={[0.045, 0.06, 0.018]} /><meshStandardMaterial color="#64748b" /></mesh>
         </>
       )}
-      {selected && <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.43, 0.47, 32]} /><meshBasicMaterial color="#60a5fa" side={2} /></mesh>}
+      {selected && device.mount?.surface !== 'wall' && <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.43, 0.47, 32]} /><meshBasicMaterial color="#60a5fa" side={2} /></mesh>}
       <Html position={[0, 0.52, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
         <div className={`homelab-object-label ${selected ? 'is-selected' : ''}`}>{device.name}</div>
       </Html>
