@@ -8,6 +8,7 @@ import type { Group } from 'three';
 import './HomeDesignerPage.css';
 import { HouseOverviewScene } from './HouseOverviewScene';
 import { RoomArchitecture } from './RoomArchitecture';
+import { findFurniturePlacement, resolveFurnitureTransform } from './furniture-geometry';
 
 const PROJECT_ID = 'homelab-demo-project';
 const ROOM_ID = 'living-room';
@@ -214,6 +215,8 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
   const selectFurniture = useHomeLabStore((state) => state.selectFurniture);
   const updateFurniture = useHomeLabStore((state) => state.updateFurniture);
   const updateDevice = useHomeLabStore((state) => state.updateDevice);
+  const draggingFurnitureId = useRef<string | null>(null);
+  const suppressFloorClick = useRef(false);
   const room = project?.rooms.find((item) => item.id === selectedRoomId) ?? project?.rooms[0];
   const width = room?.width ?? 6;
   const depth = room?.depth ?? 5;
@@ -224,7 +227,38 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
       <color attach="background" args={['#111827']} />
       <ambientLight intensity={1.1} />
       <directionalLight position={[5, 8, 5]} intensity={2} castShadow />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow onClick={() => { selectDevice(null); selectFurniture(null); }}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow
+        onClick={() => {
+          if (suppressFloorClick.current) { suppressFloorClick.current = false; return; }
+          selectDevice(null); selectFurniture(null);
+        }}
+        onPointerDown={(event) => {
+          if (!selectedFurnitureId || !room) return;
+          event.stopPropagation();
+          event.nativeEvent.preventDefault();
+          event.nativeEvent.stopImmediatePropagation();
+          draggingFurnitureId.current = selectedFurnitureId;
+          suppressFloorClick.current = true;
+        }}
+        onPointerMove={(event) => {
+          const itemId = draggingFurnitureId.current;
+          if (!itemId || !room || !project) return;
+          event.stopPropagation();
+          const current = project.furniture?.find((item) => item.id === itemId);
+          if (!current) return;
+          const candidate: DeviceTransform = {
+            ...current.transform,
+            position: [event.point.x, 0, event.point.z],
+          };
+          updateFurniture(itemId, {
+            transform: resolveFurnitureTransform(current, candidate, room, project.furniture ?? []),
+          });
+        }}
+        onPointerUp={(event) => {
+          if (draggingFurnitureId.current) event.stopPropagation();
+          draggingFurnitureId.current = null;
+        }}
+        onPointerLeave={() => { draggingFurnitureId.current = null; }}>
         <planeGeometry args={[width, depth]} />
         <meshStandardMaterial color="#c8c4b8" roughness={0.88} />
       </mesh>
@@ -244,7 +278,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
       {(project?.furniture ?? []).filter((item) => item.roomId === room?.id).map((item) => (
         <FurnitureModel key={item.id} item={item} selected={selectedFurnitureId === item.id}
           onSelect={() => selectFurniture(item.id)} transformMode={transformMode}
-          onTransform={(transform) => updateFurniture(item.id, { transform })} />
+          onTransform={(transform) => updateFurniture(item.id, { transform: resolveFurnitureTransform(item, transform, room!, project?.furniture ?? []) })} />
       ))}
       <OrbitControls makeDefault target={[0, 1, 0]} minDistance={4} maxDistance={15} maxPolarAngle={Math.PI / 2.05} />
     </>
@@ -354,19 +388,18 @@ export function HomeDesignerPage() {
     if (!definition) return;
     const count = (activeProject.furniture ?? []).filter((item) => item.type === type).length + 1;
     const [width, depth, height] = definition.size;
-    const index = roomFurniture.length;
-    const maxX = Math.max(0, (activeRoom.width - width) / 2);
-    const maxZ = Math.max(0, (activeRoom.depth - depth) / 2);
-    const desiredX = -1.5 + (index % 3) * 1.3;
-    const desiredZ = -1.2 + Math.floor(index / 3) * 1.2;
-    const x = Math.max(-maxX, Math.min(maxX, desiredX));
-    const z = Math.max(-maxZ, Math.min(maxZ, desiredZ));
-    addFurniture({
+    const item: HomeFurniture = {
       id: crypto.randomUUID(), projectId: activeProject.id, roomId: activeRoom.id, type,
       name: `${definition.label} ${count}`,
-      transform: { position: [x, 0, z], rotation: [0, 0, 0], scale: [1, 1, 1] },
+      transform: { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] },
       size: { width, depth, height },
-    });
+    };
+    const placement = findFurniturePlacement(item, activeRoom, roomFurniture);
+    if (!placement) {
+      window.alert('Não há espaço livre suficiente neste cômodo para esse objeto.');
+      return;
+    }
+    addFurniture({ ...item, transform: placement });
   };
 
   return (
@@ -435,7 +468,7 @@ export function HomeDesignerPage() {
                   <button type="button" className={transformMode === 'scale' ? 'active' : ''} onClick={() => setTransformMode('scale')}>Escala</button>
                 </div>
               )}
-              <span className="scene-hint">{houseOverview ? 'Planta geral · selecione um cômodo ou dispositivo' : 'Arraste os eixos para transformar · Scroll para zoom'}</span>
+              <span className="scene-hint">{houseOverview ? 'Planta geral · selecione um cômodo ou dispositivo' : 'Selecione um móvel e arraste no piso para reposicionar · Scroll para zoom'}</span>
               <button type="button" title="Restaurar câmera" onClick={() => window.location.reload()}><RotateCcw size={15} /></button>
             </div>
           </div>
@@ -443,10 +476,10 @@ export function HomeDesignerPage() {
             <Canvas shadows camera={{ position: [8, 7, 9], fov: 42 }} dpr={[1, 2]}>
               {houseOverview ? <HouseOverviewScene /> : <RoomScene transformMode={transformMode} />}
             </Canvas>
-            <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> {houseOverview ? 'PLANTA GERAL' : 'VISUALIZAÇÃO 3D'} <span>·</span> {houseOverview ? (activeProject?.rooms.length ?? 0) + ' ambientes · ' + (activeProject?.devices.length ?? 0) + ' dispositivos' : roomDevices.length + ' dispositivos'}</div>
+            <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> {houseOverview ? 'PLANTA GERAL' : 'VISUALIZAÇÃO 3D'} <span>·</span> {houseOverview ? (activeProject?.rooms.length ?? 0) + ' ambientes · ' + (activeProject?.devices.length ?? 0) + ' dispositivos' : roomDevices.length + ' dispositivos · ' + roomFurniture.length + ' móveis'}</div>
             <div className="homelab-canvas-controls"><span>{houseOverview ? 'CASA' : '3D'}</span><span>{houseOverview ? 'Visão geral' : 'Perspectiva'}</span></div>
           </div>
-          <footer className="homelab-bottom-bar"><span><kbd>Botão esquerdo</kbd> Orbitar</span><span><kbd>Scroll</kbd> Zoom</span><span><kbd>Clique</kbd> Selecionar dispositivo</span><span className="homelab-dimensions">{houseOverview ? `${activeProject?.rooms.length ?? 0} ambientes` : activeRoom ? `${activeRoom.width.toFixed(1)} × ${activeRoom.depth.toFixed(1)} m` : 'Sem ambiente'}</span></footer>
+          <footer className="homelab-bottom-bar"><span><kbd>Botão esquerdo</kbd> Orbitar</span><span><kbd>Scroll</kbd> Zoom</span><span><kbd>Arrastar no piso</kbd> Mover móvel selecionado</span><span className="homelab-dimensions">{houseOverview ? `${activeProject?.rooms.length ?? 0} ambientes` : activeRoom ? `${activeRoom.width.toFixed(1)} × ${activeRoom.depth.toFixed(1)} m` : 'Sem ambiente'}</span></footer>
         </section>
 
         <aside className="homelab-inspector">
