@@ -8,8 +8,8 @@ type RoomPlacement = { room: HomeRoom; x: number; z: number };
 
 function getRoomPlacements(rooms: HomeRoom[]): RoomPlacement[] {
   if (!rooms.length) return [];
-  const cellWidth = Math.max(...rooms.map((room) => room.width), 4) + 1.5;
-  const cellDepth = Math.max(...rooms.map((room) => room.depth), 4) + 1.5;
+  const maxWidth = Math.max(...rooms.map((room) => room.width), 4);
+  const maxDepth = Math.max(...rooms.map((room) => room.depth), 4);
   const columns = Math.min(2, rooms.length);
   const rows = Math.ceil(rooms.length / columns);
   return rooms.map((room, index) => {
@@ -17,8 +17,8 @@ function getRoomPlacements(rooms: HomeRoom[]): RoomPlacement[] {
     const row = Math.floor(index / columns);
     return {
       room,
-      x: column * cellWidth - ((columns - 1) * cellWidth) / 2,
-      z: row * cellDepth - ((rows - 1) * cellDepth) / 2,
+      x: room.position?.x ?? column * (maxWidth + 1.5) - ((columns - 1) * (maxWidth + 1.5)) / 2,
+      z: room.position?.z ?? row * (maxDepth + 1.5) - ((rows - 1) * (maxDepth + 1.5)) / 2,
     };
   });
 }
@@ -65,13 +65,13 @@ export function HouseOverviewScene() {
   const selectRoom = useHomeLabStore((state) => state.selectRoom);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
   const placements = useMemo(() => getRoomPlacements(project?.rooms ?? []), [project?.rooms]);
-  const cellWidth = Math.max(...(project?.rooms ?? []).map((room) => room.width), 4) + 1.5;
-  const cellDepth = Math.max(...(project?.rooms ?? []).map((room) => room.depth), 4) + 1.5;
-  const columns = Math.min(2, placements.length);
-  const rows = Math.ceil(placements.length / Math.max(columns, 1));
-  const targetX = 0;
-  const targetZ = 0;
-  const cameraDistance = Math.max(cellWidth * Math.max(columns, 1), cellDepth * Math.max(rows, 1), 10);
+  const minX = Math.min(...placements.map(({ room, x }) => x - room.width / 2), -5);
+  const maxX = Math.max(...placements.map(({ room, x }) => x + room.width / 2), 5);
+  const minZ = Math.min(...placements.map(({ room, z }) => z - room.depth / 2), -5);
+  const maxZ = Math.max(...placements.map(({ room, z }) => z + room.depth / 2), 5);
+  const targetX = (minX + maxX) / 2;
+  const targetZ = (minZ + maxZ) / 2;
+  const cameraDistance = Math.max(maxX - minX, maxZ - minZ, 10);
 
   return (
     <>
