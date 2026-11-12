@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Html, OrbitControls } from '@react-three/drei';
 import { useHomeLabStore } from './store';
 import type { HomeRoom, SmartDevice } from './types';
+import { RoomArchitecture } from './RoomArchitecture';
 
 type RoomPlacement = { room: HomeRoom; x: number; z: number };
 
@@ -83,14 +84,7 @@ export function HouseOverviewScene() {
             <boxGeometry args={[room.width, 0.05, room.depth]} />
             <meshStandardMaterial color={room.id === selectedRoomId ? '#d7e3ef' : '#b9c4cf'} roughness={0.9} />
           </mesh>
-          <mesh position={[0, room.height / 2, -room.depth / 2]} receiveShadow>
-            <boxGeometry args={[room.width, room.height, 0.1]} />
-            <meshStandardMaterial color="#e7e5e4" transparent opacity={0.76} />
-          </mesh>
-          <mesh position={[-room.width / 2, room.height / 2, 0]} receiveShadow>
-            <boxGeometry args={[0.1, room.height, room.depth]} />
-            <meshStandardMaterial color="#d6d3d1" transparent opacity={0.76} />
-          </mesh>
+          <RoomArchitecture room={room} />
           <mesh position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[room.width, room.depth]} />
             <meshBasicMaterial color="#64748b" wireframe transparent opacity={0.22} />
