@@ -22,6 +22,10 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 
 As dependências 3D estão declaradas em `frontend/package.json`. No diretório `frontend`, execute `npm install` para instalá-las e atualizar o lockfile local (o repositório não contém `frontend/package-lock.json`).
 
+- Alternância entre edição individual e visão geral da residência.
+- Planta geral automática em grade de até duas colunas, com cômodos identificados e dispositivos exibidos em seus ambientes.
+- Seleção de cômodos e dispositivos na visão geral; transformações continuam disponíveis no modo de edição individual.
+
 ## Próximos passos
 
 1. API de projetos e sincronização entre dispositivos.
@@ -34,7 +38,7 @@ A cena não se comunica diretamente com QEMU. A futura integração deverá pass
 
 ## Limitações atuais
 
-- Os ambientes são visualizados individualmente; ainda não existe planta conjunta com cômodos conectados.
+- A visão geral organiza cômodos em uma grade automática para visualização; isso não representa ainda paredes compartilhadas, adjacência arquitetônica ou portas de conexão.
 - O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
 - Os modelos 3D são primitivas provisórias.
-- A transformação é feita pelo gizmo de eixos; ainda não há encaixe à grade nem limites físicos do cômodo.
+- A transformação é feita pelo gizmo de eixos; ainda não há encaixe físico aos limites do cômodo nem prevenção de colisões.
