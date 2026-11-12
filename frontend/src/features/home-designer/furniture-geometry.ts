@@ -90,7 +90,7 @@ export function findFurniturePlacement(
   item: HomeFurniture,
   room: HomeRoom,
   furniture: HomeFurniture[],
-): DeviceTransform {
+ ): DeviceTransform | null {
   const step = 0.25;
   const maxX = Math.max(0, room.width / 2 - item.size.width / 2 - WALL_CLEARANCE);
   const maxZ = Math.max(0, room.depth / 2 - item.size.depth / 2 - WALL_CLEARANCE);
@@ -113,5 +113,5 @@ export function findFurniturePlacement(
       }
     }
   }
-  return item.transform;
+  return null;
 }
