@@ -128,7 +128,7 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
   };
 
   const beginPan = (event: ReactPointerEvent<SVGSVGElement>) => {
-    if (event.target !== event.currentTarget) return;
+    if (event.target !== event.currentTarget && (event.target as Element).tagName.toLowerCase() !== 'rect') return;
     const svg = svgRef.current; const matrix = svg?.getScreenCTM();
     if (!svg || !matrix) return;
     const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
