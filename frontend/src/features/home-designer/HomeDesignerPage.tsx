@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Grid, Html, OrbitControls, TransformControls } from '@react-three/drei';
 import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wifi, Zap } from 'lucide-react';
 import { useHomeLabStore } from './store';
-import type { DeviceTransform, HomeLabDeviceType, SmartDevice } from './types';
+import type { DeviceTransform, HomeLabDeviceType, RoomOpening, SmartDevice } from './types';
 import type { Group } from 'three';
 import './HomeDesignerPage.css';
 import { HouseOverviewScene } from './HouseOverviewScene';
@@ -157,7 +157,7 @@ export function HomeDesignerPage() {
   const selectedDevice = activeProject?.devices.find((device) => device.id === selectedDeviceId) ?? null;
   const roomDevices = activeProject?.devices.filter((device) => device.roomId === activeRoom?.id) ?? [];
 
-  const updateOpening = (openingId: string, patch: Partial<NonNullable<typeof activeRoom>['openings'][number]>) => {
+  const updateOpening = (openingId: string, patch: Partial<RoomOpening>) => {
     if (!activeRoom) return;
     const current = activeRoom.openings ?? [];
     const updated = current.map((opening) => {
