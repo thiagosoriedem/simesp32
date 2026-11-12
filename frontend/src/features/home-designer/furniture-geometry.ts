@@ -15,6 +15,29 @@ function getFootprint(item: HomeFurniture, transform: DeviceTransform): Footprin
   return { minX: x - halfX, maxX: x + halfX, minZ: z - halfZ, maxZ: z + halfZ };
 }
 
+function getDoorClearance(room: HomeRoom): Footprint[] {
+  const clearanceDepth = 0.85;
+  return (room.openings ?? []).filter((opening) => opening.type === 'door').map((opening) => {
+    const halfWidth = opening.width / 2 + 0.08;
+    if (opening.wall === 'north') return {
+      minX: opening.offset - halfWidth, maxX: opening.offset + halfWidth,
+      minZ: -room.depth / 2 + WALL_CLEARANCE, maxZ: -room.depth / 2 + WALL_CLEARANCE + clearanceDepth,
+    };
+    if (opening.wall === 'south') return {
+      minX: opening.offset - halfWidth, maxX: opening.offset + halfWidth,
+      minZ: room.depth / 2 - WALL_CLEARANCE - clearanceDepth, maxZ: room.depth / 2 - WALL_CLEARANCE,
+    };
+    if (opening.wall === 'east') return {
+      minX: room.width / 2 - WALL_CLEARANCE - clearanceDepth, maxX: room.width / 2 - WALL_CLEARANCE,
+      minZ: opening.offset - halfWidth, maxZ: opening.offset + halfWidth,
+    };
+    return {
+      minX: -room.width / 2 + WALL_CLEARANCE, maxX: -room.width / 2 + WALL_CLEARANCE + clearanceDepth,
+      minZ: opening.offset - halfWidth, maxZ: opening.offset + halfWidth,
+    };
+  });
+}
+
 function overlaps(a: Footprint, b: Footprint, clearance = OBJECT_CLEARANCE): boolean {
   return a.minX < b.maxX + clearance && a.maxX > b.minX - clearance
     && a.minZ < b.maxZ + clearance && a.maxZ > b.minZ - clearance;
@@ -45,7 +68,8 @@ export function resolveFurnitureTransform(
     position: [candidate.position[0] + dx, 0, candidate.position[2] + dz],
   };
   const boundedFootprint = getFootprint(item, bounded);
-  const collision = furniture.some((other) => other.id !== item.id
+  const blocksDoor = getDoorClearance(room).some((doorZone) => overlaps(boundedFootprint, doorZone, 0));
+  const collision = blocksDoor || furniture.some((other) => other.id !== item.id
     && overlaps(boundedFootprint, getFootprint(other, other.transform)));
   return collision ? item.transform : bounded;
 }
@@ -57,8 +81,9 @@ function isPlacementFree(item: HomeFurniture, transform: DeviceTransform, room: 
     && footprint.minZ >= -room.depth / 2 + WALL_CLEARANCE
     && footprint.maxZ <= room.depth / 2 - WALL_CLEARANCE
     && item.size.height * Math.abs(transform.scale[1]) <= room.height;
-  return inside && !furniture.some((other) => other.id !== item.id
-    && overlaps(footprint, getFootprint(other, other.transform)));
+  return inside && !getDoorClearance(room).some((doorZone) => overlaps(footprint, doorZone, 0))
+    && !furniture.some((other) => other.id !== item.id
+      && overlaps(footprint, getFootprint(other, other.transform)));
 }
 
 export function findFurniturePlacement(
