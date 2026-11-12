@@ -97,12 +97,16 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
       const shiftX = drag.edge === 'east' ? (width - drag.width) / 2 : drag.edge === 'west' ? -(width - drag.width) / 2 : 0;
       const shiftZ = drag.edge === 'south' ? (depth - drag.depth) / 2 : drag.edge === 'north' ? -(depth - drag.depth) / 2 : 0;
       const position = { x: Math.round((drag.position.x + shiftX) / GRID) * GRID, z: Math.round((drag.position.z + shiftZ) / GRID) * GRID };
+      const openingsFit = (room.openings ?? []).every((opening) => {
+        const wallLength = opening.wall === 'north' || opening.wall === 'south' ? width : depth;
+        return Math.abs(opening.offset) + opening.width / 2 <= wallLength / 2 - 0.05;
+      });
       const overlapsRoom = rooms.some((other) => {
         if (other.id === room.id) return false;
         const ox = other.position?.x ?? 0; const oz = other.position?.z ?? 0;
         return Math.abs(position.x - ox) < (width + other.width) / 2 - 0.02 && Math.abs(position.z - oz) < (depth + other.depth) / 2 - 0.02;
       });
-      if (!overlapsRoom) onResizeRoom(room.id, { width, depth, position });
+      if (openingsFit && !overlapsRoom) onResizeRoom(room.id, { width, depth, position });
       return;
     }
     if (drag.kind === 'room') {
