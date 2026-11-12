@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Grid, Html, OrbitControls, TransformControls } from '@react-three/drei';
 import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wifi, Zap } from 'lucide-react';
 import { useHomeLabStore } from './store';
-import type { DeviceMount, DeviceTransform, HomeLabDeviceType, HomeRoom, RoomOpening, SmartDevice, WallSide } from './types';
+import type { DeviceMount, DeviceTransform, FurnitureType, HomeFurniture, HomeLabDeviceType, HomeRoom, RoomOpening, SmartDevice, WallSide } from './types';
 import type { Group } from 'three';
 import './HomeDesignerPage.css';
 import { HouseOverviewScene } from './HouseOverviewScene';
@@ -20,6 +20,17 @@ const deviceCatalog: { type: HomeLabDeviceType; label: string; icon: typeof Box;
   { type: 'outlet', label: 'Tomada', icon: Box, description: 'Ponto de energia' },
   { type: 'television', label: 'Televisão', icon: Box, description: 'Equipamento de parede' },
   { type: 'air_conditioner', label: 'Ar-condicionado', icon: Box, description: 'Unidade interna' },
+];
+
+const furnitureCatalog: { type: FurnitureType; label: string; size: [number, number, number] }[] = [
+  { type: 'bed', label: 'Cama', size: [1.6, 2, 0.55] },
+  { type: 'sofa', label: 'Sofá', size: [2, 0.85, 0.85] },
+  { type: 'table', label: 'Mesa', size: [1.2, 0.8, 0.75] },
+  { type: 'chair', label: 'Cadeira', size: [0.48, 0.48, 0.9] },
+  { type: 'wardrobe', label: 'Guarda-roupa', size: [1.6, 0.6, 2.1] },
+  { type: 'refrigerator', label: 'Geladeira', size: [0.75, 0.75, 1.85] },
+  { type: 'sink', label: 'Pia / bancada', size: [1.2, 0.6, 0.9] },
+  { type: 'shower', label: 'Chuveiro', size: [0.9, 0.9, 2.1] },
 ];
 
 type TransformMode = 'translate' | 'rotate' | 'scale';
@@ -127,11 +138,82 @@ function DeviceModel({ device, transform, selected, onSelect, transformMode, onT
   );
 }
 
+function FurnitureModel({ item, selected, onSelect, transformMode, onTransform }: {
+  item: HomeFurniture;
+  selected: boolean;
+  onSelect: () => void;
+  transformMode: TransformMode;
+  onTransform: (transform: DeviceTransform) => void;
+}) {
+  const groupRef = useRef<Group>(null);
+  const [width, height, depth] = [item.size.width, item.size.height, item.size.depth];
+  const commitTransform = () => {
+    const object = groupRef.current;
+    if (!object) return;
+    onTransform({
+      position: [object.position.x, object.position.y, object.position.z],
+      rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+      scale: [object.scale.x, object.scale.y, object.scale.z],
+    });
+  };
+  const wood = '#9a7555';
+  return (
+    <>
+      <group ref={groupRef} position={item.transform.position} rotation={item.transform.rotation} scale={item.transform.scale}
+        onClick={(event) => { event.stopPropagation(); onSelect(); }}>
+        {item.type === 'bed' ? (
+          <>
+            <mesh position={[0, height * 0.38, 0]}><boxGeometry args={[width, height * 0.55, depth]} /><meshStandardMaterial color="#b8c5d2" /></mesh>
+            <mesh position={[0, height * 0.72, -depth * 0.32]}><boxGeometry args={[width * 0.9, height * 0.18, depth * 0.25]} /><meshStandardMaterial color="#f1f5f9" /></mesh>
+            <mesh position={[0, height * 0.12, 0]}><boxGeometry args={[width + 0.08, height * 0.2, depth + 0.08]} /><meshStandardMaterial color={wood} /></mesh>
+          </>
+        ) : item.type === 'sofa' ? (
+          <>
+            <mesh position={[0, height * 0.35, 0]}><boxGeometry args={[width, height * 0.42, depth]} /><meshStandardMaterial color="#647f91" /></mesh>
+            <mesh position={[0, height * 0.72, -depth * 0.38]}><boxGeometry args={[width, height * 0.55, depth * 0.22]} /><meshStandardMaterial color="#526b7d" /></mesh>
+            {[-1, 1].map((side) => <mesh key={side} position={[side * width * 0.46, height * 0.48, 0]}><boxGeometry args={[width * 0.09, height * 0.65, depth]} /><meshStandardMaterial color="#526b7d" /></mesh>)}
+          </>
+        ) : item.type === 'chair' ? (
+          <>
+            <mesh position={[0, height * 0.48, 0]}><boxGeometry args={[width, 0.08, depth]} /><meshStandardMaterial color={wood} /></mesh>
+            <mesh position={[0, height * 0.78, -depth * 0.42]}><boxGeometry args={[width, height * 0.45, 0.07]} /><meshStandardMaterial color={wood} /></mesh>
+            {[-1, 1].flatMap((x) => [-1, 1].map((z) => <mesh key={x + ':' + z} position={[x * width * 0.4, height * 0.22, z * depth * 0.4]}><boxGeometry args={[0.055, height * 0.45, 0.055]} /><meshStandardMaterial color={wood} /></mesh>))}
+          </>
+        ) : item.type === 'table' || item.type === 'sink' ? (
+          <>
+            <mesh position={[0, height * 0.9, 0]}><boxGeometry args={[width, 0.09, depth]} /><meshStandardMaterial color={item.type === 'sink' ? '#cbd5e1' : wood} /></mesh>
+            {[-1, 1].flatMap((x) => [-1, 1].map((z) => <mesh key={x + ':' + z} position={[x * width * 0.43, height * 0.43, z * depth * 0.4]}><boxGeometry args={[0.07, height * 0.85, 0.07]} /><meshStandardMaterial color={wood} /></mesh>))}
+            {item.type === 'sink' && <mesh position={[0, height * 0.98, 0]}><boxGeometry args={[width * 0.34, 0.025, depth * 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>}
+          </>
+        ) : item.type === 'shower' ? (
+          <>
+            <mesh position={[0, 0.04, 0]}><boxGeometry args={[width, 0.08, depth]} /><meshStandardMaterial color="#cbd5e1" /></mesh>
+            <mesh position={[0, height * 0.48, -depth * 0.43]}><boxGeometry args={[width, height * 0.9, 0.035]} /><meshStandardMaterial color="#93c5fd" transparent opacity={0.35} /></mesh>
+            <mesh position={[0, height * 0.94, 0]}><cylinderGeometry args={[0.12, 0.12, 0.035, 20]} /><meshStandardMaterial color="#94a3b8" /></mesh>
+          </>
+        ) : (
+          <mesh position={[0, height / 2, 0]}><boxGeometry args={[width, height, depth]} /><meshStandardMaterial color={item.type === 'refrigerator' ? '#dbe4ea' : wood} roughness={0.55} /></mesh>
+        )}
+        {selected && <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[Math.max(width, depth) * 0.48, Math.max(width, depth) * 0.51, 32]} /><meshBasicMaterial color="#60a5fa" side={2} /></mesh>}
+        <Html position={[0, height + 0.12, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+          <div className={`homelab-object-label ${selected ? 'is-selected' : ''}`}>{item.name}</div>
+        </Html>
+      </group>
+      {selected && <TransformControls object={groupRef} mode={transformMode} size={0.8} translationSnap={0.25}
+        rotationSnap={Math.PI / 12} scaleSnap={0.1} onMouseUp={commitTransform} />}
+    </>
+  );
+}
+
 function RoomScene({ transformMode }: { transformMode: TransformMode }) {
   const project = useHomeLabStore((state) => state.project);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
+  const selectedFurnitureId = useHomeLabStore((state) => state.selectedFurnitureId);
+  const selectedFurnitureId = useHomeLabStore((state) => state.selectedFurnitureId);
   const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
+  const selectFurniture = useHomeLabStore((state) => state.selectFurniture);
+  const updateFurniture = useHomeLabStore((state) => state.updateFurniture);
   const updateDevice = useHomeLabStore((state) => state.updateDevice);
   const room = project?.rooms.find((item) => item.id === selectedRoomId) ?? project?.rooms[0];
   const width = room?.width ?? 6;
@@ -143,7 +225,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
       <color attach="background" args={['#111827']} />
       <ambientLight intensity={1.1} />
       <directionalLight position={[5, 8, 5]} intensity={2} castShadow />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow onClick={() => selectDevice(null)}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow onClick={() => { selectDevice(null); selectFurniture(null); }}>
         <planeGeometry args={[width, depth]} />
         <meshStandardMaterial color="#c8c4b8" roughness={0.88} />
       </mesh>
@@ -160,6 +242,11 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
           onTransform={(transform) => updateDevice(device.id, { transform })}
         />
       ))}
+      {(project?.furniture ?? []).filter((item) => item.roomId === room?.id).map((item) => (
+        <FurnitureModel key={item.id} item={item} selected={selectedFurnitureId === item.id}
+          onSelect={() => selectFurniture(item.id)} transformMode={transformMode}
+          onTransform={(transform) => updateFurniture(item.id, { transform })} />
+      ))}
       <OrbitControls makeDefault target={[0, 1, 0]} minDistance={4} maxDistance={15} maxPolarAngle={Math.PI / 2.05} />
     </>
   );
@@ -173,6 +260,8 @@ export function HomeDesignerPage() {
   const renameProject = useHomeLabStore((state) => state.renameProject);
   const setProject = useHomeLabStore((state) => state.setProject);
   const addDevice = useHomeLabStore((state) => state.addDevice);
+  const addFurniture = useHomeLabStore((state) => state.addFurniture);
+  const removeFurniture = useHomeLabStore((state) => state.removeFurniture);
   const removeDevice = useHomeLabStore((state) => state.removeDevice);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
   const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
@@ -216,7 +305,9 @@ export function HomeDesignerPage() {
   const activeRoom = activeProject?.rooms.find((room) => room.id === selectedRoomId) ?? activeProject?.rooms[0] ?? null;
   const roomName = activeRoom?.name ?? 'Ambiente';
   const selectedDevice = activeProject?.devices.find((device) => device.id === selectedDeviceId) ?? null;
+  const selectedFurniture = activeProject?.furniture?.find((item) => item.id === selectedFurnitureId) ?? null;
   const roomDevices = activeProject?.devices.filter((device) => device.roomId === activeRoom?.id) ?? [];
+  const roomFurniture = activeProject?.furniture?.filter((item) => item.roomId === activeRoom?.id) ?? [];
 
   const updateOpening = (openingId: string, patch: Partial<RoomOpening>) => {
     if (!activeRoom) return;
@@ -257,6 +348,21 @@ export function HomeDesignerPage() {
     });
   };
 
+  const addCatalogFurniture = (type: FurnitureType) => {
+    if (!activeProject || !activeRoom) return;
+    const definition = furnitureCatalog.find((item) => item.type === type);
+    if (!definition) return;
+    const count = (activeProject.furniture ?? []).filter((item) => item.type === type).length + 1;
+    const [width, depth, height] = definition.size;
+    const index = roomFurniture.length;
+    addFurniture({
+      id: crypto.randomUUID(), projectId: activeProject.id, roomId: activeRoom.id, type,
+      name: `${definition.label} ${count}`,
+      transform: { position: [-1.5 + (index % 3) * 1.3, 0, -1.2 + Math.floor(index / 3) * 1.2], rotation: [0, 0, 0], scale: [1, 1, 1] },
+      size: { width, depth, height },
+    });
+  };
+
   return (
     <main className="homelab-page">
       <header className="homelab-topbar">
@@ -294,6 +400,17 @@ export function HomeDesignerPage() {
               return <button className="homelab-catalog-item" key={item.type} type="button" onClick={() => addCatalogDevice(item.type)}><span className={`catalog-icon icon-${item.type}`}><Icon size={17} /></span><span className="catalog-copy"><strong>{item.label}</strong><small>{item.description}</small></span><Plus size={15} className="catalog-add" /></button>;
             })}
           </div>
+          <div className="homelab-sidebar-heading catalog-heading"><span>MÓVEIS E OBJETOS</span><span className="catalog-count">{activeProject?.furniture?.length ?? 0}</span></div>
+          <p className="homelab-sidebar-hint">Adicione itens para compor o ambiente</p>
+          <div className="homelab-device-catalog">
+            {furnitureCatalog.map((item) => (
+              <button className="homelab-catalog-item" key={item.type} type="button" onClick={() => addCatalogFurniture(item.type)}>
+                <span className="catalog-icon icon-furniture"><Box size={17} /></span>
+                <span className="catalog-copy"><strong>{item.label}</strong><small>{item.size[0]} × {item.size[1]} × {item.size[2]} m</small></span>
+                <Plus size={15} className="catalog-add" />
+              </button>
+            ))}
+          </div>
           <div className="homelab-sidebar-footer"><span className="status-dot" /> Editor 3D experimental</div>
         </aside>
 
@@ -305,7 +422,7 @@ export function HomeDesignerPage() {
                 <button type="button" className={!houseOverview ? 'active' : ''} onClick={() => setHouseOverview(false)}>Editar cômodo</button>
                 <button type="button" className={houseOverview ? 'active' : ''} onClick={() => { setHouseOverview(true); selectDevice(null); }}>Visão da casa</button>
               </div>
-              {selectedDevice && !houseOverview && (
+              {(selectedDevice || selectedFurniture) && !houseOverview && (
                 <div className="homelab-transform-tools" role="group" aria-label="Ferramenta de transformação">
                   <button type="button" className={transformMode === 'translate' ? 'active' : ''} onClick={() => setTransformMode('translate')}>Mover</button>
                   <button type="button" className={transformMode === 'rotate' ? 'active' : ''} onClick={() => setTransformMode('rotate')}>Girar</button>
@@ -328,7 +445,22 @@ export function HomeDesignerPage() {
 
         <aside className="homelab-inspector">
           <div className="inspector-header"><strong>Propriedades</strong><Settings2 size={17} /></div>
-          {selectedDevice ? (
+          {selectedFurniture ? (
+            <div className="inspector-content">
+              <div className="inspector-device-icon"><Box size={22} /></div>
+              <label>Nome do móvel / objeto</label>
+              <input value={selectedFurniture.name} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { name: event.target.value })} />
+              <label>Categoria</label><div className="inspector-static-value">{furnitureCatalog.find((item) => item.type === selectedFurniture.type)?.label ?? selectedFurniture.type}</div>
+              <label>DIMENSÕES (METROS)</label>
+              <div className="inspector-opening-fields">
+                <label>Largura<input type="number" min="0.1" step="0.05" value={selectedFurniture.size.width} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, width: Math.max(0.1, Number(event.target.value) || 0.1) } })} /></label>
+                <label>Profundidade<input type="number" min="0.1" step="0.05" value={selectedFurniture.size.depth} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, depth: Math.max(0.1, Number(event.target.value) || 0.1) } })} /></label>
+                <label>Altura<input type="number" min="0.1" step="0.05" value={selectedFurniture.size.height} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, height: Math.max(0.1, Number(event.target.value) || 0.1) } })} /></label>
+              </div>
+              <div className="inspector-binding"><strong>Posicionamento 3D</strong><small>Use o gizmo para mover, girar e redimensionar o item. As dimensões definem a geometria do modelo.</small></div>
+              <button className="homelab-delete-button" type="button" onClick={() => removeFurniture(selectedFurniture.id)}><Trash2 size={15} /> Remover item</button>
+            </div>
+          ) : selectedDevice ? (
             <div className="inspector-content">
               <div className="inspector-device-icon"><Box size={22} /></div>
               <label>Nome do dispositivo</label>
@@ -443,7 +575,7 @@ export function HomeDesignerPage() {
                   <small className="homelab-opening-help">A posição é medida a partir do centro da parede. Os valores são limitados ao tamanho do ambiente.</small>
                 </div>
               ))}
-              <div className="inspector-binding"><strong>{roomDevices.length} dispositivos neste ambiente</strong><small>As dimensões atualizam a visualização 3D.</small></div>
+              <div className="inspector-binding"><strong>{roomDevices.length} dispositivos · {roomFurniture.length} móveis/objetos neste ambiente</strong><small>As dimensões atualizam a visualização 3D.</small></div>
             </div>
           ) : (
             <div className="inspector-empty"><div><Settings2 size={23} /></div><strong>Nenhum ambiente</strong><p>Adicione um ambiente para começar o projeto.</p></div>
