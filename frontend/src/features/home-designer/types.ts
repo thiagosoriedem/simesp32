@@ -45,12 +45,26 @@ export interface SmartDevice {
   simulation?: SimulationBinding;
 }
 
+export type OpeningType = 'door' | 'window';
+export type WallSide = 'north' | 'south' | 'east' | 'west';
+
+export interface RoomOpening {
+  id: string;
+  type: OpeningType;
+  wall: WallSide;
+  offset: number;
+  width: number;
+  height: number;
+  sillHeight: number;
+}
+
 export interface HomeRoom {
   id: string;
   name: string;
   width: number;
   depth: number;
   height: number;
+  openings?: RoomOpening[];
 }
 
 export interface HomeLabProject {
