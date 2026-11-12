@@ -96,7 +96,7 @@ function DeviceModel({ device, transform, selected, onSelect, transformMode, onT
         <div className={`homelab-object-label ${selected ? 'is-selected' : ''}`}>{device.name}</div>
       </Html>
     </group>
-    {selected && (
+    {selected && device.mount?.surface !== 'wall' && (
       <TransformControls
         object={groupRef}
         mode={transformMode}
@@ -350,30 +350,36 @@ export function HomeDesignerPage() {
                   <small>O dispositivo acompanha a parede e fica orientado para o interior do cômodo.</small>
                 </div>
               )}
-              <label>POSIÇÃO (METROS)</label>
-              <div className="inspector-transform-grid">
-                {(['X', 'Y', 'Z'] as const).map((axis, index) => (
-                  <label key={axis}>{axis}
-                    <input type="number" step="0.1" value={selectedDevice.transform.position[index]} onChange={(event) => {
-                      const position = [...selectedDevice.transform.position] as [number, number, number];
-                      position[index] = Number(event.target.value) || 0;
-                      useHomeLabStore.getState().updateDevice(selectedDevice.id, { transform: { ...selectedDevice.transform, position } });
-                    }} />
-                  </label>
-                ))}
-              </div>
-              <label>ROTAÇÃO (GRAUS)</label>
-              <div className="inspector-transform-grid">
-                {(['X', 'Y', 'Z'] as const).map((axis, index) => (
-                  <label key={axis}>{axis}
-                    <input type="number" step="5" value={Math.round(selectedDevice.transform.rotation[index] * 180 / Math.PI)} onChange={(event) => {
-                      const rotation = [...selectedDevice.transform.rotation] as [number, number, number];
-                      rotation[index] = (Number(event.target.value) || 0) * Math.PI / 180;
-                      useHomeLabStore.getState().updateDevice(selectedDevice.id, { transform: { ...selectedDevice.transform, rotation } });
-                    }} />
-                  </label>
-                ))}
-              </div>
+              {selectedDevice.mount?.surface === 'wall' ? (
+                <div className="inspector-binding"><strong>Posição controlada pela fixação</strong><small>Ajuste parede, posição e altura nos campos acima. Para mover livremente, altere a fixação para piso.</small></div>
+              ) : (
+                <>
+                  <label>POSIÇÃO (METROS)</label>
+                  <div className="inspector-transform-grid">
+                    {(['X', 'Y', 'Z'] as const).map((axis, index) => (
+                      <label key={axis}>{axis}
+                        <input type="number" step="0.1" value={selectedDevice.transform.position[index]} onChange={(event) => {
+                          const position = [...selectedDevice.transform.position] as [number, number, number];
+                          position[index] = Number(event.target.value) || 0;
+                          useHomeLabStore.getState().updateDevice(selectedDevice.id, { transform: { ...selectedDevice.transform, position } });
+                        }} />
+                      </label>
+                    ))}
+                  </div>
+                  <label>ROTAÇÃO (GRAUS)</label>
+                  <div className="inspector-transform-grid">
+                    {(['X', 'Y', 'Z'] as const).map((axis, index) => (
+                      <label key={axis}>{axis}
+                        <input type="number" step="5" value={Math.round(selectedDevice.transform.rotation[index] * 180 / Math.PI)} onChange={(event) => {
+                          const rotation = [...selectedDevice.transform.rotation] as [number, number, number];
+                          rotation[index] = (Number(event.target.value) || 0) * Math.PI / 180;
+                          useHomeLabStore.getState().updateDevice(selectedDevice.id, { transform: { ...selectedDevice.transform, rotation } });
+                        }} />
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
               <button className="homelab-delete-button" type="button" onClick={() => removeDevice(selectedDevice.id)}><Trash2 size={15} /> Remover dispositivo</button>
             </div>
           ) : activeRoom ? (
