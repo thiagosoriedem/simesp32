@@ -53,8 +53,9 @@ function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; sele
 function RoomScene() {
   const project = useHomeLabStore((state) => state.project);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
+  const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
-  const room = project?.rooms[0];
+  const room = project?.rooms.find((item) => item.id === selectedRoomId) ?? project?.rooms[0];
   const width = room?.width ?? 6;
   const depth = room?.depth ?? 5;
   const height = room?.height ?? 2.8;
@@ -77,7 +78,7 @@ function RoomScene() {
         <meshStandardMaterial color="#d6d3d1" roughness={0.92} />
       </mesh>
       <Grid position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]} args={[width, depth]} cellSize={0.5} cellThickness={0.5} cellColor="#64748b" sectionSize={1} sectionThickness={0.8} sectionColor="#475569" fadeDistance={20} infiniteGrid={false} />
-      {project?.devices.map((device) => (
+      {project?.devices.filter((device) => device.roomId === room?.id).map((device) => (
         <DeviceModel key={device.id} device={device} selected={selectedDeviceId === device.id} onSelect={() => selectDevice(device.id)} />
       ))}
       <OrbitControls makeDefault target={[0, 1, 0]} minDistance={4} maxDistance={15} maxPolarAngle={Math.PI / 2.05} />
@@ -93,8 +94,11 @@ export function HomeDesignerPage() {
   const addDevice = useHomeLabStore((state) => state.addDevice);
   const removeDevice = useHomeLabStore((state) => state.removeDevice);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
+  const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
-  const roomName = 'Sala de estar';
+  const selectRoom = useHomeLabStore((state) => state.selectRoom);
+  const addRoom = useHomeLabStore((state) => state.addRoom);
+  const updateRoom = useHomeLabStore((state) => state.updateRoom);
 
   useEffect(() => {
     if (!project) {
@@ -109,7 +113,10 @@ export function HomeDesignerPage() {
   }, [project, setProject]);
 
   const activeProject = project;
+  const activeRoom = activeProject?.rooms.find((room) => room.id === selectedRoomId) ?? activeProject?.rooms[0] ?? null;
+  const roomName = activeRoom?.name ?? 'Ambiente';
   const selectedDevice = activeProject?.devices.find((device) => device.id === selectedDeviceId) ?? null;
+  const roomDevices = activeProject?.devices.filter((device) => device.roomId === activeRoom?.id) ?? [];
 
   const addCatalogDevice = (type: HomeLabDeviceType) => {
     if (!activeProject) return;
@@ -126,7 +133,7 @@ export function HomeDesignerPage() {
     addDevice({
       id: crypto.randomUUID(),
       projectId: activeProject.id,
-      roomId: activeProject.rooms[0]?.id ?? ROOM_ID,
+      roomId: activeRoom?.id ?? activeProject.rooms[0]?.id ?? ROOM_ID,
       type,
       name: `${names[type]} ${count}`,
       transform: { position, rotation: [0, 0, 0], scale: [1, 1, 1] },
@@ -149,8 +156,18 @@ export function HomeDesignerPage() {
         <aside className="homelab-sidebar">
           <div className="homelab-sidebar-heading"><span>PROJETO</span><button type="button" title="Novo projeto" onClick={() => { setProject({ id: crypto.randomUUID(), name: 'Novo projeto residencial', rooms: [{ id: crypto.randomUUID(), name: 'Sala de estar', width: 6, depth: 5, height: 2.8 }], devices: [], updatedAt: new Date().toISOString() }); }}><Plus size={15} /></button></div>
           <input className="homelab-project-input" aria-label="Nome do projeto" value={projectName} onChange={(event) => renameProject(event.target.value)} />
-          <div className="homelab-sidebar-heading room-heading"><span>AMBIENTES</span><button type="button" title="Adicionar ambiente" onClick={() => window.alert('A criação de múltiplos cômodos será adicionada na próxima etapa.')}><Plus size={15} /></button></div>
-          <button className="homelab-room-item active" type="button"><span className="room-icon"><Box size={16} /></span><span>{roomName}</span><span className="room-count">{activeProject?.devices.length ?? 0}</span></button>
+          <div className="homelab-sidebar-heading room-heading"><span>AMBIENTES</span><button type="button" title="Adicionar ambiente" onClick={() => {
+            const number = (activeProject?.rooms.length ?? 0) + 1;
+            addRoom({ id: crypto.randomUUID(), name: `Novo ambiente ${number}`, width: 4, depth: 4, height: 2.8 });
+          }}><Plus size={15} /></button></div>
+          <div className="homelab-room-list">
+            {activeProject?.rooms.map((room) => (
+              <button className={`homelab-room-item ${activeRoom?.id === room.id ? 'active' : ''}`} key={room.id} type="button" onClick={() => selectRoom(room.id)}>
+                <span className="room-icon"><Box size={16} /></span><span>{room.name}</span>
+                <span className="room-count">{activeProject.devices.filter((device) => device.roomId === room.id).length}</span>
+              </button>
+            ))}
+          </div>
 
           <div className="homelab-sidebar-heading catalog-heading"><span>DISPOSITIVOS</span><span className="catalog-count">{activeProject?.devices.length ?? 0}</span></div>
           <p className="homelab-sidebar-hint">Selecione para adicionar à sala</p>
@@ -175,7 +192,7 @@ export function HomeDesignerPage() {
             <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> VISUALIZAÇÃO 3D <span>·</span> {activeProject?.devices.length ?? 0} dispositivos</div>
             <div className="homelab-canvas-controls"><span>3D</span><span>Perspectiva</span></div>
           </div>
-          <footer className="homelab-bottom-bar"><span><kbd>Botão esquerdo</kbd> Orbitar</span><span><kbd>Scroll</kbd> Zoom</span><span><kbd>Clique</kbd> Selecionar dispositivo</span><span className="homelab-dimensions">Sala: 6,0 × 5,0 m</span></footer>
+          <footer className="homelab-bottom-bar"><span><kbd>Botão esquerdo</kbd> Orbitar</span><span><kbd>Scroll</kbd> Zoom</span><span><kbd>Clique</kbd> Selecionar dispositivo</span><span className="homelab-dimensions">{activeRoom ? `${activeRoom.width.toFixed(1)} × ${activeRoom.depth.toFixed(1)} m` : 'Sem ambiente'}</span></footer>
         </section>
 
         <aside className="homelab-inspector">
@@ -190,10 +207,23 @@ export function HomeDesignerPage() {
               <label>Posição (X / Z)</label><div className="inspector-coordinates"><span>{selectedDevice.transform.position[0].toFixed(2)} m</span><span>{selectedDevice.transform.position[2].toFixed(2)} m</span></div>
               <button className="homelab-delete-button" type="button" onClick={() => removeDevice(selectedDevice.id)}><Trash2 size={15} /> Remover dispositivo</button>
             </div>
+          ) : activeRoom ? (
+            <div className="inspector-content">
+              <div className="inspector-device-icon"><Box size={22} /></div>
+              <label>Nome do ambiente</label>
+              <input value={activeRoom.name} onChange={(event) => updateRoom(activeRoom.id, { name: event.target.value })} />
+              <label>Largura (metros)</label>
+              <input type="number" min="1" max="30" step="0.1" value={activeRoom.width} onChange={(event) => updateRoom(activeRoom.id, { width: Math.max(1, Math.min(30, Number(event.target.value) || 1)) })} />
+              <label>Profundidade (metros)</label>
+              <input type="number" min="1" max="30" step="0.1" value={activeRoom.depth} onChange={(event) => updateRoom(activeRoom.id, { depth: Math.max(1, Math.min(30, Number(event.target.value) || 1)) })} />
+              <label>Pé-direito (metros)</label>
+              <input type="number" min="2" max="6" step="0.1" value={activeRoom.height} onChange={(event) => updateRoom(activeRoom.id, { height: Math.max(2, Math.min(6, Number(event.target.value) || 2)) })} />
+              <div className="inspector-binding"><strong>{roomDevices.length} dispositivos neste ambiente</strong><small>As dimensões atualizam a visualização 3D.</small></div>
+            </div>
           ) : (
-            <div className="inspector-empty"><div><Settings2 size={23} /></div><strong>Nenhum item selecionado</strong><p>Selecione um dispositivo na cena para editar suas propriedades.</p></div>
+            <div className="inspector-empty"><div><Settings2 size={23} /></div><strong>Nenhum ambiente</strong><p>Adicione um ambiente para começar o projeto.</p></div>
           )}
-          <div className="inspector-room-card"><span>AMBIENTE ATUAL</span><strong>{roomName}</strong><small>6,0 m × 5,0 m · Pé-direito 2,8 m</small></div>
+          <div className="inspector-room-card"><span>AMBIENTE ATUAL</span><strong>{roomName}</strong><small>{activeRoom ? `${activeRoom.width.toFixed(1)} m × ${activeRoom.depth.toFixed(1)} m · Pé-direito ${activeRoom.height.toFixed(1)} m` : 'Sem dimensões'}</small></div>
         </aside>
       </div>
     </main>
