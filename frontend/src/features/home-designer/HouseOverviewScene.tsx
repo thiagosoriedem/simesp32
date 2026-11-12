@@ -97,19 +97,37 @@ function findWallConnections(placements: RoomPlacement[]): WallConnection[] {
   return connections;
 }
 
-function OverviewDevice({ device, offsetX, offsetZ, selected, onSelect }: {
+function getOverviewDeviceTransform(device: SmartDevice, room: HomeRoom) {
+  const mount = device.mount;
+  if (!mount || mount.surface !== 'wall') return device.transform;
+  const wall = mount.wall ?? 'north';
+  const horizontal = wall === 'north' || wall === 'south';
+  const length = horizontal ? room.width : room.depth;
+  const offset = Math.max(-length / 2 + 0.15, Math.min(length / 2 - 0.15, mount.offset));
+  const y = Math.max(0.15, Math.min(room.height - 0.15, mount.height));
+  const position: [number, number, number] = wall === 'north' ? [offset, y, -room.depth / 2 + 0.09]
+    : wall === 'south' ? [offset, y, room.depth / 2 - 0.09]
+      : wall === 'east' ? [room.width / 2 - 0.09, y, offset]
+        : [-room.width / 2 + 0.09, y, offset];
+  const yaw = wall === 'south' ? Math.PI : wall === 'east' ? -Math.PI / 2 : wall === 'west' ? Math.PI / 2 : 0;
+  return { ...device.transform, position, rotation: [0, yaw, 0] as [number, number, number] };
+}
+
+function OverviewDevice({ device, room, offsetX, offsetZ, selected, onSelect }: {
   device: SmartDevice;
+  room: HomeRoom;
   offsetX: number;
   offsetZ: number;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const position = device.transform.position;
+  const transform = getOverviewDeviceTransform(device, room);
+  const position = transform.position;
   return (
     <group
       position={[position[0] + offsetX, position[1], position[2] + offsetZ]}
-      rotation={device.transform.rotation}
-      scale={device.transform.scale}
+      rotation={transform.rotation}
+      scale={transform.scale}
       onClick={(event) => { event.stopPropagation(); onSelect(); }}
     >
       {device.type === 'lamp' ? (
@@ -185,6 +203,7 @@ export function HouseOverviewScene() {
             <OverviewDevice
               key={device.id}
               device={device}
+              room={room}
               offsetX={0}
               offsetZ={0}
               selected={selectedDeviceId === device.id}
