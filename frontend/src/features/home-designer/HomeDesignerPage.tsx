@@ -74,6 +74,9 @@ function DeviceModel({ device, selected, onSelect, transformMode, onTransform }:
         object={groupRef}
         mode={transformMode}
         size={0.8}
+        translationSnap={0.25}
+        rotationSnap={Math.PI / 12}
+        scaleSnap={0.1}
         onMouseUp={commitTransform}
       />
     )}
