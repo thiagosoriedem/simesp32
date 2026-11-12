@@ -13,6 +13,7 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Seleção de dispositivos e painel de propriedades.
 - Dispositivos associados por `roomId` e exibidos somente no ambiente ativo.
 - Estado do projeto, ambientes e dispositivos em Zustand.
+- Salvamento automático do estado no armazenamento local do navegador via persist middleware do Zustand.
 
 ## Dependências
 
@@ -20,7 +21,7 @@ As dependências 3D estão declaradas em `frontend/package.json`. No diretório 
 
 ## Próximos passos
 
-1. Persistência local e API de projetos.
+1. API de projetos e sincronização entre dispositivos.
 2. Posicionamento livre por clique/arraste e transformação dos objetos.
 3. Biblioteca com modelos 3D residenciais mais detalhados.
 4. Vínculo ESP32/GPIO e eventos do simulador.
@@ -31,6 +32,6 @@ A cena não se comunica diretamente com QEMU. A futura integração deverá pass
 ## Limitações atuais
 
 - Os ambientes são visualizados individualmente; ainda não existe planta conjunta com cômodos conectados.
-- O botão Salvar ainda não persiste o projeto.
+- O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
 - Os modelos 3D são primitivas provisórias.
 - O posicionamento de dispositivos ainda é automático, sem arrastar e soltar.
