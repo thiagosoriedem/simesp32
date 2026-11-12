@@ -5,7 +5,8 @@ import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wi
 import { useHomeLabStore } from './store';
 import type { DeviceTransform, HomeLabDeviceType, SmartDevice } from './types';
 import type { Group } from 'three';
-import './HomeDesignerPage.css';\nimport { HouseOverviewScene } from './HouseOverviewScene';
+import './HomeDesignerPage.css';
+import { HouseOverviewScene } from './HouseOverviewScene';
 
 const PROJECT_ID = 'homelab-demo-project';
 const ROOM_ID = 'living-room';
