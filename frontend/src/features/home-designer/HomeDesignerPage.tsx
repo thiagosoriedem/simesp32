@@ -144,7 +144,7 @@ export function HomeDesignerPage() {
       setProject({
         id: PROJECT_ID,
         name: 'Minha primeira residência',
-        rooms: [{ id: ROOM_ID, name: 'Sala de estar', width: 6, depth: 5, height: 2.8 }],
+        rooms: [{ id: ROOM_ID, name: 'Sala de estar', width: 6, depth: 5, height: 2.8, position: { x: 0, z: 0 } }],
         devices: [],
         updatedAt: new Date().toISOString(),
       });
@@ -209,11 +209,12 @@ export function HomeDesignerPage() {
 
       <div className="homelab-workspace">
         <aside className="homelab-sidebar">
-          <div className="homelab-sidebar-heading"><span>PROJETO</span><button type="button" title="Novo projeto" onClick={() => { setProject({ id: crypto.randomUUID(), name: 'Novo projeto residencial', rooms: [{ id: crypto.randomUUID(), name: 'Sala de estar', width: 6, depth: 5, height: 2.8 }], devices: [], updatedAt: new Date().toISOString() }); }}><Plus size={15} /></button></div>
+          <div className="homelab-sidebar-heading"><span>PROJETO</span><button type="button" title="Novo projeto" onClick={() => { setProject({ id: crypto.randomUUID(), name: 'Novo projeto residencial', rooms: [{ id: crypto.randomUUID(), name: 'Sala de estar', width: 6, depth: 5, height: 2.8, position: { x: 0, z: 0 } }], devices: [], updatedAt: new Date().toISOString() }); }}><Plus size={15} /></button></div>
           <input className="homelab-project-input" aria-label="Nome do projeto" value={projectName} onChange={(event) => renameProject(event.target.value)} />
           <div className="homelab-sidebar-heading room-heading"><span>AMBIENTES</span><button type="button" title="Adicionar ambiente" onClick={() => {
             const number = (activeProject?.rooms.length ?? 0) + 1;
-            addRoom({ id: crypto.randomUUID(), name: `Novo ambiente ${number}`, width: 4, depth: 4, height: 2.8 });
+            const anchor = activeRoom;
+            addRoom({ id: crypto.randomUUID(), name: `Novo ambiente ${number}`, width: 4, depth: 4, height: 2.8, position: anchor ? { x: (anchor.position?.x ?? 0) + anchor.width / 2 + 2, z: anchor.position?.z ?? 0 } : { x: 0, z: 0 } });
           }}><Plus size={15} /></button></div>
           <div className="homelab-room-list">
             {activeProject?.rooms.map((room) => (
@@ -310,6 +311,16 @@ export function HomeDesignerPage() {
               <input type="number" min="1" max="30" step="0.1" value={activeRoom.depth} onChange={(event) => updateRoom(activeRoom.id, { depth: Math.max(1, Math.min(30, Number(event.target.value) || 1)) })} />
               <label>Pé-direito (metros)</label>
               <input type="number" min="2" max="6" step="0.1" value={activeRoom.height} onChange={(event) => updateRoom(activeRoom.id, { height: Math.max(2, Math.min(6, Number(event.target.value) || 2)) })} />
+              <label>POSIÇÃO NA PLANTA (METROS)</label>
+              <div className="inspector-transform-grid">
+                <label>X
+                  <input type="number" step="0.25" value={activeRoom.position?.x ?? 0} onChange={(event) => updateRoom(activeRoom.id, { position: { x: Number(event.target.value) || 0, z: activeRoom.position?.z ?? 0 } })} />
+                </label>
+                <label>Z
+                  <input type="number" step="0.25" value={activeRoom.position?.z ?? 0} onChange={(event) => updateRoom(activeRoom.id, { position: { x: activeRoom.position?.x ?? 0, z: Number(event.target.value) || 0 } })} />
+                </label>
+              </div>
+              <div className="inspector-binding"><strong>Posicionamento manual</strong><small>Defina X e Z para aproximar ou encostar este cômodo aos demais. Use a visão da casa para conferir a planta.</small></div>
               <label>ABERTURAS</label>
               <div className="homelab-opening-actions">
                 <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'door', wall: 'north', offset: -0.9, width: 0.9, height: 2.1, sillHeight: 0 }] })}>+ Porta</button>
