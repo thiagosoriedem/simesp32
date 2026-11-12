@@ -4,6 +4,7 @@ import { Grid, Html, OrbitControls, TransformControls } from '@react-three/drei'
 import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wifi, Zap } from 'lucide-react';
 import { useHomeLabStore } from './store';
 import type { DeviceMount, DeviceTransform, FurnitureType, HomeFurniture, HomeLabDeviceType, HomeRoom, RoomOpening, SmartDevice, WallSide } from './types';
+import { Plane, Vector3 } from 'three';
 import type { Group } from 'three';
 import './HomeDesignerPage.css';
 import { HouseOverviewScene } from './HouseOverviewScene';
@@ -217,6 +218,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
   const updateDevice = useHomeLabStore((state) => state.updateDevice);
   const draggingFurnitureId = useRef<string | null>(null);
   const suppressFloorClick = useRef(false);
+  const dragPlane = useRef(new Plane(new Vector3(0, 1, 0), 0));
   const room = project?.rooms.find((item) => item.id === selectedRoomId) ?? project?.rooms[0];
   const width = room?.width ?? 6;
   const depth = room?.depth ?? 5;
@@ -246,9 +248,11 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
           event.stopPropagation();
           const current = project.furniture?.find((item) => item.id === itemId);
           if (!current) return;
+          const point = event.ray.intersectPlane(dragPlane.current, new Vector3());
+          if (!point) return;
           const candidate: DeviceTransform = {
             ...current.transform,
-            position: [event.point.x, 0, event.point.z],
+            position: [point.x, 0, point.z],
           };
           updateFurniture(itemId, {
             transform: resolveFurnitureTransform(current, candidate, room, (project.furniture ?? []).filter((item) => item.roomId === room.id)),
