@@ -157,6 +157,22 @@ export function HomeDesignerPage() {
   const selectedDevice = activeProject?.devices.find((device) => device.id === selectedDeviceId) ?? null;
   const roomDevices = activeProject?.devices.filter((device) => device.roomId === activeRoom?.id) ?? [];
 
+  const updateOpening = (openingId: string, patch: Partial<NonNullable<typeof activeRoom>['openings'][number]>) => {
+    if (!activeRoom) return;
+    const current = activeRoom.openings ?? [];
+    const updated = current.map((opening) => {
+      if (opening.id !== openingId) return opening;
+      const next = { ...opening, ...patch };
+      const wallLength = next.wall === 'north' || next.wall === 'south' ? activeRoom.width : activeRoom.depth;
+      next.width = Math.max(0.4, Math.min(wallLength - 0.2, next.width));
+      next.offset = Math.max(-wallLength / 2 + next.width / 2 + 0.05, Math.min(wallLength / 2 - next.width / 2 - 0.05, next.offset));
+      next.height = Math.max(0.3, Math.min(activeRoom.height - 0.1, next.height));
+      next.sillHeight = next.type === 'door' ? 0 : Math.max(0, Math.min(activeRoom.height - next.height - 0.05, next.sillHeight));
+      return next;
+    });
+    updateRoom(activeRoom.id, { openings: updated });
+  };
+
   const addCatalogDevice = (type: HomeLabDeviceType) => {
     if (!activeProject) return;
     const count = activeProject.devices.filter((device) => device.type === type).length + 1;
@@ -300,9 +316,22 @@ export function HomeDesignerPage() {
                 <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'window', wall: 'north', offset: 0.9, width: 1.2, height: 1, sillHeight: 0.9 }] })}>+ Janela</button>
               </div>
               {(activeRoom.openings ?? []).map((opening) => (
-                <div className="homelab-opening-row" key={opening.id}>
-                  <span>{opening.type === 'door' ? 'Porta' : 'Janela'} · {opening.wall}</span>
-                  <button type="button" aria-label={`Remover ${opening.type === 'door' ? 'porta' : 'janela'}`} onClick={() => updateRoom(activeRoom.id, { openings: (activeRoom.openings ?? []).filter((item) => item.id !== opening.id) })}>Remover</button>
+                <div className="homelab-opening-editor" key={opening.id}>
+                  <div className="homelab-opening-editor-heading">
+                    <strong>{opening.type === 'door' ? 'Porta' : 'Janela'}</strong>
+                    <button type="button" aria-label={`Remover ${opening.type === 'door' ? 'porta' : 'janela'}`} onClick={() => updateRoom(activeRoom.id, { openings: (activeRoom.openings ?? []).filter((item) => item.id !== opening.id) })}>Remover</button>
+                  </div>
+                  <label>Parede</label>
+                  <select value={opening.wall} onChange={(event) => updateOpening(opening.id, { wall: event.target.value as 'north' | 'south' | 'east' | 'west' })}>
+                    <option value="north">Norte</option><option value="south">Sul</option><option value="east">Leste</option><option value="west">Oeste</option>
+                  </select>
+                  <div className="homelab-opening-fields">
+                    <label>Posição (m)<input type="number" step="0.1" value={opening.offset} onChange={(event) => updateOpening(opening.id, { offset: Number(event.target.value) || 0 })} /></label>
+                    <label>Largura (m)<input type="number" min="0.4" step="0.1" value={opening.width} onChange={(event) => updateOpening(opening.id, { width: Number(event.target.value) || 0.4 })} /></label>
+                    <label>Altura (m)<input type="number" min="0.3" step="0.1" value={opening.height} onChange={(event) => updateOpening(opening.id, { height: Number(event.target.value) || 0.3 })} /></label>
+                    {opening.type === 'window' && <label>Peitoril (m)<input type="number" min="0" step="0.1" value={opening.sillHeight} onChange={(event) => updateOpening(opening.id, { sillHeight: Number(event.target.value) || 0 })} /></label>}
+                  </div>
+                  <small className="homelab-opening-help">A posição é medida a partir do centro da parede. Os valores são limitados ao tamanho do ambiente.</small>
                 </div>
               ))}
               <div className="inspector-binding"><strong>{roomDevices.length} dispositivos neste ambiente</strong><small>As dimensões atualizam a visualização 3D.</small></div>
