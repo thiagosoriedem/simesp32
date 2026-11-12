@@ -42,7 +42,7 @@ export function FloorPlan2D({
     return { x: (local.x - 450) / scale, z: (local.y - 310) / scale };
   };
 
-  const startDrag = (event: ReactPointerEvent<SVGSVGElement>, target: DragTarget) => {
+  const startDrag = (event: ReactPointerEvent<SVGElement>, target: DragTarget) => {
     event.stopPropagation();
     if (!target) return;
     dragRef.current = target;
