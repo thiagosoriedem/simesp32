@@ -251,7 +251,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
             position: [event.point.x, 0, event.point.z],
           };
           updateFurniture(itemId, {
-            transform: resolveFurnitureTransform(current, candidate, room, project.furniture ?? []),
+            transform: resolveFurnitureTransform(current, candidate, room, (project.furniture ?? []).filter((item) => item.roomId === room.id)),
           });
         }}
         onPointerUp={(event) => {
@@ -278,7 +278,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
       {(project?.furniture ?? []).filter((item) => item.roomId === room?.id).map((item) => (
         <FurnitureModel key={item.id} item={item} selected={selectedFurnitureId === item.id}
           onSelect={() => selectFurniture(item.id)} transformMode={transformMode}
-          onTransform={(transform) => updateFurniture(item.id, { transform: resolveFurnitureTransform(item, transform, room!, project?.furniture ?? []) })} />
+          onTransform={(transform) => updateFurniture(item.id, { transform: resolveFurnitureTransform(item, transform, room!, (project?.furniture ?? []).filter((entry) => entry.roomId === room!.id)) })} />
       ))}
       <OrbitControls makeDefault target={[0, 1, 0]} minDistance={4} maxDistance={15} maxPolarAngle={Math.PI / 2.05} />
     </>
@@ -342,6 +342,24 @@ export function HomeDesignerPage() {
   const selectedFurniture = activeProject?.furniture?.find((item) => item.id === selectedFurnitureId) ?? null;
   const roomDevices = activeProject?.devices.filter((device) => device.roomId === activeRoom?.id) ?? [];
   const roomFurniture = activeProject?.furniture?.filter((item) => item.roomId === activeRoom?.id) ?? [];
+
+  const updateSelectedFurnitureSize = (patch: Partial<HomeFurniture['size']>) => {
+    if (!selectedFurniture || !activeRoom) return;
+    const nextSize = { ...selectedFurniture.size, ...patch };
+    const candidateTransform: DeviceTransform = {
+      ...selectedFurniture.transform,
+      position: [...selectedFurniture.transform.position],
+    };
+    const roomItems = (activeProject?.furniture ?? []).filter((item) => item.roomId === activeRoom.id);
+    const resolved = resolveFurnitureTransform(
+      { ...selectedFurniture, size: nextSize },
+      candidateTransform,
+      activeRoom,
+      roomItems,
+    );
+    if (resolved === selectedFurniture.transform) return;
+    useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: nextSize, transform: resolved });
+  };
 
   const updateOpening = (openingId: string, patch: Partial<RoomOpening>) => {
     if (!activeRoom) return;
@@ -492,9 +510,9 @@ export function HomeDesignerPage() {
               <label>Categoria</label><div className="inspector-static-value">{furnitureCatalog.find((item) => item.type === selectedFurniture.type)?.label ?? selectedFurniture.type}</div>
               <label>DIMENSÕES (METROS)</label>
               <div className="inspector-opening-fields">
-                <label>Largura<input type="number" min="0.1" step="0.05" max={activeRoom?.width ?? 30} value={selectedFurniture.size.width} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, width: Math.min(activeRoom?.width ?? 30, Math.max(0.1, Number(event.target.value) || 0.1)) } })} /></label>
-                <label>Profundidade<input type="number" min="0.1" step="0.05" max={activeRoom?.depth ?? 30} value={selectedFurniture.size.depth} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, depth: Math.min(activeRoom?.depth ?? 30, Math.max(0.1, Number(event.target.value) || 0.1)) } })} /></label>
-                <label>Altura<input type="number" min="0.1" step="0.05" max={activeRoom?.height ?? 6} value={selectedFurniture.size.height} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, height: Math.min(activeRoom?.height ?? 6, Math.max(0.1, Number(event.target.value) || 0.1)) } })} /></label>
+                <label>Largura<input type="number" min="0.1" step="0.05" max={activeRoom?.width ?? 30} value={selectedFurniture.size.width} onChange={(event) => updateSelectedFurnitureSize({ width: Math.min(activeRoom?.width ?? 30, Math.max(0.1, Number(event.target.value) || 0.1)) })} /></label>
+                <label>Profundidade<input type="number" min="0.1" step="0.05" max={activeRoom?.depth ?? 30} value={selectedFurniture.size.depth} onChange={(event) => updateSelectedFurnitureSize({ depth: Math.min(activeRoom?.depth ?? 30, Math.max(0.1, Number(event.target.value) || 0.1)) })} /></label>
+                <label>Altura<input type="number" min="0.1" step="0.05" max={activeRoom?.height ?? 6} value={selectedFurniture.size.height} onChange={(event) => updateSelectedFurnitureSize({ height: Math.min(activeRoom?.height ?? 6, Math.max(0.1, Number(event.target.value) || 0.1)) })} /></label>
               </div>
               <div className="inspector-binding"><strong>Posicionamento 3D</strong><small>Use o gizmo para mover, girar e redimensionar o item. As dimensões definem a geometria do modelo.</small></div>
               <button className="homelab-delete-button" type="button" onClick={() => removeFurniture(selectedFurniture.id)}><Trash2 size={15} /> Remover item</button>
