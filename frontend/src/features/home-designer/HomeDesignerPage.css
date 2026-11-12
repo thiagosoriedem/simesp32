@@ -34,3 +34,15 @@
 .icon-furniture{color:#e8c59b;background:#493526}
 
 .homelab-sidebar{overflow-y:auto;overscroll-behavior:contain}.homelab-inspector{overflow-y:auto;overscroll-behavior:contain}
+
+
+/* Planta baixa 2D */
+.homelab-canvas-wrap.is-plan2d{background:#0d1626}
+.homelab-plan2d{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0;padding:12px;gap:8px}
+.homelab-plan2d svg{display:block;width:100%;height:100%;min-height:0;flex:1;touch-action:none}
+.homelab-plan-legend{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:8px 10px;border:1px solid #26364b;border-radius:7px;background:#111c2d;color:#aab8ca;font-size:9px}
+.homelab-plan-legend span{display:flex;align-items:center;gap:5px}
+.homelab-plan-legend i{display:inline-block;width:9px;height:9px;border-radius:2px}
+.legend-furniture{background:#647f91}.legend-device{background:#10b981;border-radius:50%!important}.legend-door{background:#0d1626;border:1px solid #94a3b8}.legend-window{background:#38bdf8}
+.homelab-plan-legend small{margin-left:auto;color:#718198;font-size:8px}
+@media(max-width:650px){.homelab-plan2d{padding:5px}.homelab-plan-legend{gap:7px}.homelab-plan-legend small{width:100%;margin-left:0}}
