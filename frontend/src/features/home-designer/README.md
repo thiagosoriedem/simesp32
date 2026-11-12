@@ -12,6 +12,7 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Catálogo inicial: ESP32, lâmpada, PIR e interruptor.
 - Seleção de dispositivos e painel de propriedades.
 - Gizmo 3D para mover, girar e redimensionar o dispositivo selecionado.
+- Encaixe de movimentação em passos de 25 cm, rotação em 15° e escala em passos de 0,1.
 - Campos numéricos para posição X/Y/Z e rotação X/Y/Z.
 - Dispositivos associados por `roomId` e exibidos somente no ambiente ativo.
 - Estado do projeto, ambientes e dispositivos em Zustand.
