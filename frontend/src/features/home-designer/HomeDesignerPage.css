@@ -46,3 +46,7 @@
 .legend-furniture{background:#647f91}.legend-device{background:#10b981;border-radius:50%!important}.legend-door{background:#0d1626;border:1px solid #94a3b8}.legend-window{background:#38bdf8}
 .homelab-plan-legend small{margin-left:auto;color:#718198;font-size:8px}
 @media(max-width:650px){.homelab-plan2d{padding:5px}.homelab-plan-legend{gap:7px}.homelab-plan-legend small{width:100%;margin-left:0}}
+
+
+/* Controles de navegação da planta geral */
+.homelab-house-plan2d{position:relative}.homelab-plan-controls{position:absolute;z-index:2;top:20px;right:20px;display:flex;align-items:center;gap:5px;padding:4px;background:#111c2d;border:1px solid #304058;border-radius:7px}.homelab-plan-controls button{min-width:28px;height:27px;padding:0 8px;border:1px solid #34465f;border-radius:5px;background:#1b2b43;color:#dbeafe;font-size:11px;cursor:pointer}.homelab-plan-controls button:hover{background:#28466a}.homelab-plan-controls span{min-width:42px;text-align:center;color:#aab8ca;font-size:9px}
