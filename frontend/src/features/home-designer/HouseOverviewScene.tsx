@@ -139,10 +139,16 @@ function OverviewDevice({ device, room, offsetX, offsetZ, selected, onSelect }: 
         <mesh position={[0, 0.07, 0]}><boxGeometry args={[0.72, 0.08, 0.42]} /><meshStandardMaterial color="#087f5b" /></mesh>
       ) : device.type === 'motion_sensor' ? (
         <mesh position={[0, 0.1, 0]}><boxGeometry args={[0.32, 0.18, 0.24]} /><meshStandardMaterial color="#a78bfa" /></mesh>
+      ) : device.type === 'television' ? (
+        <mesh position={[0, 0.08, 0]}><boxGeometry args={[1.2, 0.72, 0.07]} /><meshStandardMaterial color="#172b45" metalness={0.3} /></mesh>
+      ) : device.type === 'air_conditioner' ? (
+        <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.95, 0.25, 0.22]} /><meshStandardMaterial color="#f1f5f9" /></mesh>
+      ) : device.type === 'outlet' ? (
+        <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.22, 0.16, 0.035]} /><meshStandardMaterial color="#f8fafc" /></mesh>
       ) : (
-        <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.22, 0.16, 0.08]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
+        <mesh position={[0, 0.08, 0]}><boxGeometry args={[0.22, 0.16, 0.035]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
       )}
-      {selected && <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.35, 0.4, 24]} /><meshBasicMaterial color="#60a5fa" side={2} /></mesh>}
+      {selected && device.mount?.surface !== 'wall' && <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.35, 0.4, 24]} /><meshBasicMaterial color="#60a5fa" side={2} /></mesh>}
       <Html position={[0, 0.5, 0]} center distanceFactor={13} style={{ pointerEvents: 'none' }}>
         <div className={`homelab-object-label ${selected ? 'is-selected' : ''}`}>{device.name}</div>
       </Html>
