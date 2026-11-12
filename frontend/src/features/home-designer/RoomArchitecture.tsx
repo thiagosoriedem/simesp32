@@ -80,9 +80,9 @@ function OpeningFrame({ opening, room }: { opening: RoomOpening; room: HomeRoom 
   </group>;
 }
 
-export function RoomArchitecture({ room }: { room: HomeRoom }) {
+export function RoomArchitecture({ room, hiddenWalls = [] }: { room: HomeRoom; hiddenWalls?: WallSide[] }) {
   return <>
-    {(['north', 'south', 'east', 'west'] as WallSide[]).map((side) => <Wall key={side} room={room} side={side} />)}
+    {(['north', 'south', 'east', 'west'] as WallSide[]).filter((side) => !hiddenWalls.includes(side)).map((side) => <Wall key={side} room={room} side={side} />)}
     {(room.openings ?? []).map((opening) => <OpeningFrame key={opening.id} opening={opening} room={room} />)}
   </>;
 }
