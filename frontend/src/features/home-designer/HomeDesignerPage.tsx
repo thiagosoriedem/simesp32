@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Grid, Html, OrbitControls, TransformControls } from '@react-three/drei';
 import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wifi, Zap } from 'lucide-react';
 import { useHomeLabStore } from './store';
-import type { DeviceTransform, HomeLabDeviceType, RoomOpening, SmartDevice } from './types';
+import type { DeviceMount, DeviceTransform, HomeLabDeviceType, HomeRoom, RoomOpening, SmartDevice, WallSide } from './types';
 import type { Group } from 'three';
 import './HomeDesignerPage.css';
 import { HouseOverviewScene } from './HouseOverviewScene';
@@ -17,12 +17,37 @@ const deviceCatalog: { type: HomeLabDeviceType; label: string; icon: typeof Box;
   { type: 'lamp', label: 'Lâmpada', icon: Lightbulb, description: 'Ponto de iluminação' },
   { type: 'motion_sensor', label: 'Sensor PIR', icon: Zap, description: 'Detecção de movimento' },
   { type: 'switch', label: 'Interruptor', icon: Settings2, description: 'Acionamento manual' },
+  { type: 'outlet', label: 'Tomada', icon: Box, description: 'Ponto de energia' },
+  { type: 'television', label: 'Televisão', icon: Box, description: 'Equipamento de parede' },
+  { type: 'air_conditioner', label: 'Ar-condicionado', icon: Box, description: 'Unidade interna' },
 ];
 
 type TransformMode = 'translate' | 'rotate' | 'scale';
 
-function DeviceModel({ device, selected, onSelect, transformMode, onTransform }: {
+const wallSides: { value: WallSide; label: string }[] = [
+  { value: 'north', label: 'Norte' }, { value: 'south', label: 'Sul' },
+  { value: 'east', label: 'Leste' }, { value: 'west', label: 'Oeste' },
+];
+
+function getMountedTransform(device: SmartDevice, room?: HomeRoom): DeviceTransform {
+  const mount = device.mount;
+  if (!room || !mount || mount.surface !== 'wall') return device.transform;
+  const wall = mount.wall ?? 'north';
+  const horizontal = wall === 'north' || wall === 'south';
+  const length = horizontal ? room.width : room.depth;
+  const offset = Math.max(-length / 2 + 0.15, Math.min(length / 2 - 0.15, mount.offset));
+  const y = Math.max(0.15, Math.min(room.height - 0.15, mount.height));
+  const position: [number, number, number] = wall === 'north' ? [offset, y, -room.depth / 2 + 0.09]
+    : wall === 'south' ? [offset, y, room.depth / 2 - 0.09]
+      : wall === 'east' ? [room.width / 2 - 0.09, y, offset]
+        : [-room.width / 2 + 0.09, y, offset];
+  const yaw = wall === 'south' ? Math.PI : wall === 'east' ? -Math.PI / 2 : wall === 'west' ? Math.PI / 2 : 0;
+  return { ...device.transform, position, rotation: [0, yaw, 0] };
+}
+
+function DeviceModel({ device, transform, selected, onSelect, transformMode, onTransform }: {
   device: SmartDevice;
+  transform: DeviceTransform;
   selected: boolean;
   onSelect: () => void;
   transformMode: TransformMode;
@@ -42,7 +67,7 @@ function DeviceModel({ device, selected, onSelect, transformMode, onTransform }:
 
   return (
     <>
-    <group ref={groupRef} position={device.transform.position} rotation={device.transform.rotation} scale={device.transform.scale} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
+    <group ref={groupRef} position={transform.position} rotation={transform.rotation} scale={transform.scale} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
       {device.type === 'lamp' ? (
         <>
           <mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.055, 0.08, 0.16, 16]} /><meshStandardMaterial color="#64748b" /></mesh>
@@ -112,6 +137,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
         <DeviceModel
           key={device.id}
           device={device}
+          transform={getMountedTransform(device, room)}
           selected={selectedDeviceId === device.id}
           onSelect={() => selectDevice(device.id)}
           transformMode={transformMode}
@@ -293,6 +319,37 @@ export function HomeDesignerPage() {
               <input value={selectedDevice.name} onChange={(event) => useHomeLabStore.getState().updateDevice(selectedDevice.id, { name: event.target.value })} />
               <label>Tipo</label><div className="inspector-static-value">{deviceCatalog.find((item) => item.type === selectedDevice.type)?.label ?? selectedDevice.type}</div>
               <label>Vínculo de simulação</label><div className="inspector-binding">{selectedDevice.simulation ? 'ESP32 vinculada' : 'Não vinculado'}<small>{selectedDevice.simulation ? selectedDevice.simulation.language : 'Vincule uma placa no laboratório IoT'}</small></div>
+              <label>FIXAÇÃO</label>
+              <select value={selectedDevice.mount?.surface ?? 'floor'} onChange={(event) => {
+                const surface = event.target.value as 'floor' | 'wall';
+                const mount: DeviceMount = surface === 'wall'
+                  ? { surface: 'wall', wall: selectedDevice.mount?.wall ?? 'north', offset: selectedDevice.mount?.offset ?? 0, height: selectedDevice.mount?.height ?? 1.2 }
+                  : { surface: 'floor', offset: 0, height: 0 };
+                const transform = surface === 'wall' ? getMountedTransform({ ...selectedDevice, mount }, activeRoom ?? undefined) : { ...selectedDevice.transform, position: [selectedDevice.transform.position[0], 0, selectedDevice.transform.position[2]] as [number, number, number] };
+                useHomeLabStore.getState().updateDevice(selectedDevice.id, { mount, transform });
+              }}>
+                <option value="floor">No piso</option><option value="wall">Na parede</option>
+              </select>
+              {selectedDevice.mount?.surface === 'wall' && (
+                <div className="homelab-mount-editor">
+                  <label>Parede</label>
+                  <select value={selectedDevice.mount.wall ?? 'north'} onChange={(event) => {
+                    const mount = { ...selectedDevice.mount!, wall: event.target.value as WallSide };
+                    useHomeLabStore.getState().updateDevice(selectedDevice.id, { mount, transform: getMountedTransform({ ...selectedDevice, mount }, activeRoom ?? undefined) });
+                  }}>{wallSides.map((side) => <option key={side.value} value={side.value}>{side.label}</option>)}</select>
+                  <div className="homelab-opening-fields">
+                    <label>Posição na parede (m)<input type="number" step="0.1" value={selectedDevice.mount.offset} onChange={(event) => {
+                      const mount = { ...selectedDevice.mount!, offset: Number(event.target.value) || 0 };
+                      useHomeLabStore.getState().updateDevice(selectedDevice.id, { mount, transform: getMountedTransform({ ...selectedDevice, mount }, activeRoom ?? undefined) });
+                    }} /></label>
+                    <label>Altura do piso (m)<input type="number" min="0.15" step="0.05" value={selectedDevice.mount.height} onChange={(event) => {
+                      const mount = { ...selectedDevice.mount!, height: Number(event.target.value) || 0.15 };
+                      useHomeLabStore.getState().updateDevice(selectedDevice.id, { mount, transform: getMountedTransform({ ...selectedDevice, mount }, activeRoom ?? undefined) });
+                    }} /></label>
+                  </div>
+                  <small>O dispositivo acompanha a parede e fica orientado para o interior do cômodo.</small>
+                </div>
+              )}
               <label>POSIÇÃO (METROS)</label>
               <div className="inspector-transform-grid">
                 {(['X', 'Y', 'Z'] as const).map((axis, index) => (
