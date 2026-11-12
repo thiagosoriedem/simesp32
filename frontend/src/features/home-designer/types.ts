@@ -29,6 +29,13 @@ export interface SimulationBinding {
   gpioMappings: GpioMapping[];
 }
 
+export interface DeviceMount {
+  surface: 'floor' | 'wall';
+  wall?: WallSide;
+  offset: number;
+  height: number;
+}
+
 export interface SmartDevice {
   id: string;
   projectId: string;
@@ -36,6 +43,7 @@ export interface SmartDevice {
   type: HomeLabDeviceType;
   name: string;
   transform: DeviceTransform;
+  mount?: DeviceMount;
   state: {
     powered?: boolean;
     detected?: boolean;
