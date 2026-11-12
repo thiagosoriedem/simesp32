@@ -296,8 +296,8 @@ export function HomeDesignerPage() {
               <input type="number" min="2" max="6" step="0.1" value={activeRoom.height} onChange={(event) => updateRoom(activeRoom.id, { height: Math.max(2, Math.min(6, Number(event.target.value) || 2)) })} />
               <label>ABERTURAS</label>
               <div className="homelab-opening-actions">
-                <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'door', wall: 'north', offset: 0, width: 0.9, height: 2.1, sillHeight: 0 }] })}>+ Porta</button>
-                <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'window', wall: 'north', offset: 0, width: 1.2, height: 1, sillHeight: 0.9 }] })}>+ Janela</button>
+                <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'door', wall: 'north', offset: -0.9, width: 0.9, height: 2.1, sillHeight: 0 }] })}>+ Porta</button>
+                <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'window', wall: 'north', offset: 0.9, width: 1.2, height: 1, sillHeight: 0.9 }] })}>+ Janela</button>
               </div>
               {(activeRoom.openings ?? []).map((opening) => (
                 <div className="homelab-opening-row" key={opening.id}>
