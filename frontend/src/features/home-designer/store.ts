@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { HomeLabProject, HomeRoom, SmartDevice } from './types';
 
 interface HomeLabStore {
@@ -17,7 +18,7 @@ interface HomeLabStore {
   clearProject: () => void;
 }
 
-export const useHomeLabStore = create<HomeLabStore>((set) => ({
+export const useHomeLabStore = create<HomeLabStore>()(persist((set) => ({
   project: null,
   selectedDeviceId: null,
   selectedRoomId: null,
@@ -110,4 +111,6 @@ export const useHomeLabStore = create<HomeLabStore>((set) => ({
   selectDevice: (selectedDeviceId) => set({ selectedDeviceId }),
 
   clearProject: () => set({ project: null, selectedDeviceId: null, selectedRoomId: null }),
+}), {
+  name: 'homelab-studio-project-v1',
 }));
