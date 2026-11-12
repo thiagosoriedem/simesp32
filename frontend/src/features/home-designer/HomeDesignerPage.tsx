@@ -355,10 +355,16 @@ export function HomeDesignerPage() {
     const count = (activeProject.furniture ?? []).filter((item) => item.type === type).length + 1;
     const [width, depth, height] = definition.size;
     const index = roomFurniture.length;
+    const maxX = Math.max(0, (activeRoom.width - width) / 2);
+    const maxZ = Math.max(0, (activeRoom.depth - depth) / 2);
+    const desiredX = -1.5 + (index % 3) * 1.3;
+    const desiredZ = -1.2 + Math.floor(index / 3) * 1.2;
+    const x = Math.max(-maxX, Math.min(maxX, desiredX));
+    const z = Math.max(-maxZ, Math.min(maxZ, desiredZ));
     addFurniture({
       id: crypto.randomUUID(), projectId: activeProject.id, roomId: activeRoom.id, type,
       name: `${definition.label} ${count}`,
-      transform: { position: [-1.5 + (index % 3) * 1.3, 0, -1.2 + Math.floor(index / 3) * 1.2], rotation: [0, 0, 0], scale: [1, 1, 1] },
+      transform: { position: [x, 0, z], rotation: [0, 0, 0], scale: [1, 1, 1] },
       size: { width, depth, height },
     });
   };
@@ -453,9 +459,9 @@ export function HomeDesignerPage() {
               <label>Categoria</label><div className="inspector-static-value">{furnitureCatalog.find((item) => item.type === selectedFurniture.type)?.label ?? selectedFurniture.type}</div>
               <label>DIMENSÕES (METROS)</label>
               <div className="inspector-opening-fields">
-                <label>Largura<input type="number" min="0.1" step="0.05" value={selectedFurniture.size.width} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, width: Math.max(0.1, Number(event.target.value) || 0.1) } })} /></label>
-                <label>Profundidade<input type="number" min="0.1" step="0.05" value={selectedFurniture.size.depth} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, depth: Math.max(0.1, Number(event.target.value) || 0.1) } })} /></label>
-                <label>Altura<input type="number" min="0.1" step="0.05" value={selectedFurniture.size.height} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, height: Math.max(0.1, Number(event.target.value) || 0.1) } })} /></label>
+                <label>Largura<input type="number" min="0.1" step="0.05" max={activeRoom?.width ?? 30} value={selectedFurniture.size.width} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, width: Math.min(activeRoom?.width ?? 30, Math.max(0.1, Number(event.target.value) || 0.1)) } })} /></label>
+                <label>Profundidade<input type="number" min="0.1" step="0.05" max={activeRoom?.depth ?? 30} value={selectedFurniture.size.depth} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, depth: Math.min(activeRoom?.depth ?? 30, Math.max(0.1, Number(event.target.value) || 0.1)) } })} /></label>
+                <label>Altura<input type="number" min="0.1" step="0.05" max={activeRoom?.height ?? 6} value={selectedFurniture.size.height} onChange={(event) => useHomeLabStore.getState().updateFurniture(selectedFurniture.id, { size: { ...selectedFurniture.size, height: Math.min(activeRoom?.height ?? 6, Math.max(0.1, Number(event.target.value) || 0.1)) } })} /></label>
               </div>
               <div className="inspector-binding"><strong>Posicionamento 3D</strong><small>Use o gizmo para mover, girar e redimensionar o item. As dimensões definem a geometria do modelo.</small></div>
               <button className="homelab-delete-button" type="button" onClick={() => removeFurniture(selectedFurniture.id)}><Trash2 size={15} /> Remover item</button>
