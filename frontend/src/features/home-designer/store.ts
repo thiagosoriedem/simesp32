@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { HomeLabProject, HomeRoom, SmartDevice } from './types';
+import type { HomeFurniture, HomeLabProject, HomeRoom, SmartDevice } from './types';
 
 interface HomeLabStore {
   project: HomeLabProject | null;
   selectedDeviceId: string | null;
   selectedRoomId: string | null;
+  selectedFurnitureId: string | null;
   setProject: (project: HomeLabProject) => void;
   renameProject: (name: string) => void;
   addRoom: (room: HomeRoom) => void;
@@ -14,6 +15,10 @@ interface HomeLabStore {
   addDevice: (device: SmartDevice) => void;
   updateDevice: (deviceId: string, patch: Partial<SmartDevice>) => void;
   removeDevice: (deviceId: string) => void;
+  addFurniture: (item: HomeFurniture) => void;
+  updateFurniture: (itemId: string, patch: Partial<HomeFurniture>) => void;
+  removeFurniture: (itemId: string) => void;
+  selectFurniture: (itemId: string | null) => void;
   selectDevice: (deviceId: string | null) => void;
   clearProject: () => void;
 }
@@ -22,10 +27,12 @@ export const useHomeLabStore = create<HomeLabStore>()(persist((set) => ({
   project: null,
   selectedDeviceId: null,
   selectedRoomId: null,
+  selectedFurnitureId: null,
 
   setProject: (project) => set({
     project,
     selectedDeviceId: null,
+    selectedFurnitureId: null,
     selectedRoomId: project.rooms[0]?.id ?? null,
   }),
 
@@ -62,7 +69,7 @@ export const useHomeLabStore = create<HomeLabStore>()(persist((set) => ({
       };
     }),
 
-  selectRoom: (selectedRoomId) => set({ selectedRoomId, selectedDeviceId: null }),
+  selectRoom: (selectedRoomId) => set({ selectedRoomId, selectedDeviceId: null, selectedFurnitureId: null }),
 
   addDevice: (device) =>
     set((state) => {
@@ -108,9 +115,40 @@ export const useHomeLabStore = create<HomeLabStore>()(persist((set) => ({
       };
     }),
 
-  selectDevice: (selectedDeviceId) => set({ selectedDeviceId }),
+  addFurniture: (item) =>
+    set((state) => {
+      if (!state.project || item.projectId !== state.project.id ||
+        !state.project.rooms.some((room) => room.id === item.roomId) ||
+        (state.project.furniture ?? []).some((entry) => entry.id === item.id)) return state;
+      return {
+        project: { ...state.project, furniture: [...(state.project.furniture ?? []), item], updatedAt: new Date().toISOString() },
+        selectedFurnitureId: item.id, selectedDeviceId: null,
+      };
+    }),
 
-  clearProject: () => set({ project: null, selectedDeviceId: null, selectedRoomId: null }),
+  updateFurniture: (itemId, patch) =>
+    set((state) => {
+      if (!state.project || !(state.project.furniture ?? []).some((item) => item.id === itemId)) return state;
+      return {
+        project: {
+          ...state.project,
+          furniture: (state.project.furniture ?? []).map((item) =>
+            item.id === itemId ? { ...item, ...patch, id: item.id } : item),
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    }),
+
+  removeFurniture: (itemId) =>
+    set((state) => state.project ? {
+      project: { ...state.project, furniture: (state.project.furniture ?? []).filter((item) => item.id !== itemId), updatedAt: new Date().toISOString() },
+      selectedFurnitureId: state.selectedFurnitureId === itemId ? null : state.selectedFurnitureId,
+    } : state),
+
+  selectFurniture: (selectedFurnitureId) => set({ selectedFurnitureId, selectedDeviceId: null }),
+  selectDevice: (selectedDeviceId) => set({ selectedDeviceId, selectedFurnitureId: null }),
+
+  clearProject: () => set({ project: null, selectedDeviceId: null, selectedFurnitureId: null, selectedRoomId: null }),
 }), {
   name: 'homelab-studio-project-v1',
 }));
