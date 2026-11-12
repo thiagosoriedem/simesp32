@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Grid, Html, OrbitControls } from '@react-three/drei';
+import { Grid, Html, OrbitControls, TransformControls } from '@react-three/drei';
 import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wifi, Zap } from 'lucide-react';
 import { useHomeLabStore } from './store';
-import type { HomeLabDeviceType, SmartDevice } from './types';
+import type { DeviceTransform, HomeLabDeviceType, SmartDevice } from './types';
+import type { Group } from 'three';
 import './HomeDesignerPage.css';
 
 const PROJECT_ID = 'homelab-demo-project';
@@ -16,9 +17,30 @@ const deviceCatalog: { type: HomeLabDeviceType; label: string; icon: typeof Box;
   { type: 'switch', label: 'Interruptor', icon: Settings2, description: 'Acionamento manual' },
 ];
 
-function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; selected: boolean; onSelect: () => void }) {
+type TransformMode = 'translate' | 'rotate' | 'scale';
+
+function DeviceModel({ device, selected, onSelect, transformMode, onTransform }: {
+  device: SmartDevice;
+  selected: boolean;
+  onSelect: () => void;
+  transformMode: TransformMode;
+  onTransform: (transform: DeviceTransform) => void;
+}) {
+  const groupRef = useRef<Group>(null);
+
+  const commitTransform = () => {
+    const object = groupRef.current;
+    if (!object) return;
+    onTransform({
+      position: [object.position.x, object.position.y, object.position.z],
+      rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+      scale: [object.scale.x, object.scale.y, object.scale.z],
+    });
+  };
+
   return (
-    <group position={device.transform.position} rotation={device.transform.rotation} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
+    <>
+    <group ref={groupRef} position={device.transform.position} rotation={device.transform.rotation} scale={device.transform.scale} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
       {device.type === 'lamp' ? (
         <>
           <mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.055, 0.08, 0.16, 16]} /><meshStandardMaterial color="#64748b" /></mesh>
@@ -47,14 +69,24 @@ function DeviceModel({ device, selected, onSelect }: { device: SmartDevice; sele
         <div className={`homelab-object-label ${selected ? 'is-selected' : ''}`}>{device.name}</div>
       </Html>
     </group>
+    {selected && (
+      <TransformControls
+        object={groupRef}
+        mode={transformMode}
+        size={0.8}
+        onMouseUp={commitTransform}
+      />
+    )}
+    </>
   );
 }
 
-function RoomScene() {
+function RoomScene({ transformMode }: { transformMode: TransformMode }) {
   const project = useHomeLabStore((state) => state.project);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
   const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
+  const updateDevice = useHomeLabStore((state) => state.updateDevice);
   const room = project?.rooms.find((item) => item.id === selectedRoomId) ?? project?.rooms[0];
   const width = room?.width ?? 6;
   const depth = room?.depth ?? 5;
@@ -79,7 +111,14 @@ function RoomScene() {
       </mesh>
       <Grid position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]} args={[width, depth]} cellSize={0.5} cellThickness={0.5} cellColor="#64748b" sectionSize={1} sectionThickness={0.8} sectionColor="#475569" fadeDistance={20} infiniteGrid={false} />
       {project?.devices.filter((device) => device.roomId === room?.id).map((device) => (
-        <DeviceModel key={device.id} device={device} selected={selectedDeviceId === device.id} onSelect={() => selectDevice(device.id)} />
+        <DeviceModel
+          key={device.id}
+          device={device}
+          selected={selectedDeviceId === device.id}
+          onSelect={() => selectDevice(device.id)}
+          transformMode={transformMode}
+          onTransform={(transform) => updateDevice(device.id, { transform })}
+        />
       ))}
       <OrbitControls makeDefault target={[0, 1, 0]} minDistance={4} maxDistance={15} maxPolarAngle={Math.PI / 2.05} />
     </>
@@ -87,6 +126,7 @@ function RoomScene() {
 }
 
 export function HomeDesignerPage() {
+  const [transformMode, setTransformMode] = useState<TransformMode>('translate');
   const project = useHomeLabStore((state) => state.project);
   const projectName = useHomeLabStore((state) => state.project?.name ?? 'Novo projeto residencial');
   const renameProject = useHomeLabStore((state) => state.renameProject);
@@ -183,11 +223,21 @@ export function HomeDesignerPage() {
         <section className="homelab-main">
           <div className="homelab-scene-toolbar">
             <div><span className="breadcrumb-muted">Projetos</span><span className="breadcrumb-separator">/</span><strong>{roomName}</strong></div>
-            <div className="scene-tools"><span className="scene-hint">Arraste para orbitar · Scroll para zoom</span><button type="button" title="Restaurar câmera" onClick={() => window.location.reload()}><RotateCcw size={15} /></button></div>
+            <div className="scene-tools">
+              {selectedDevice && (
+                <div className="homelab-transform-tools" role="group" aria-label="Ferramenta de transformação">
+                  <button type="button" className={transformMode === 'translate' ? 'active' : ''} onClick={() => setTransformMode('translate')}>Mover</button>
+                  <button type="button" className={transformMode === 'rotate' ? 'active' : ''} onClick={() => setTransformMode('rotate')}>Girar</button>
+                  <button type="button" className={transformMode === 'scale' ? 'active' : ''} onClick={() => setTransformMode('scale')}>Escala</button>
+                </div>
+              )}
+              <span className="scene-hint">Arraste os eixos para transformar · Scroll para zoom</span>
+              <button type="button" title="Restaurar câmera" onClick={() => window.location.reload()}><RotateCcw size={15} /></button>
+            </div>
           </div>
           <div className="homelab-canvas-wrap">
             <Canvas shadows camera={{ position: [8, 7, 9], fov: 42 }} dpr={[1, 2]}>
-              <RoomScene />
+              <RoomScene transformMode={transformMode} />
             </Canvas>
             <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> VISUALIZAÇÃO 3D <span>·</span> {roomDevices.length} dispositivos</div>
             <div className="homelab-canvas-controls"><span>3D</span><span>Perspectiva</span></div>
@@ -204,7 +254,30 @@ export function HomeDesignerPage() {
               <input value={selectedDevice.name} onChange={(event) => useHomeLabStore.getState().updateDevice(selectedDevice.id, { name: event.target.value })} />
               <label>Tipo</label><div className="inspector-static-value">{deviceCatalog.find((item) => item.type === selectedDevice.type)?.label ?? selectedDevice.type}</div>
               <label>Vínculo de simulação</label><div className="inspector-binding">{selectedDevice.simulation ? 'ESP32 vinculada' : 'Não vinculado'}<small>{selectedDevice.simulation ? selectedDevice.simulation.language : 'Vincule uma placa no laboratório IoT'}</small></div>
-              <label>Posição (X / Z)</label><div className="inspector-coordinates"><span>{selectedDevice.transform.position[0].toFixed(2)} m</span><span>{selectedDevice.transform.position[2].toFixed(2)} m</span></div>
+              <label>POSIÇÃO (METROS)</label>
+              <div className="inspector-transform-grid">
+                {(['X', 'Y', 'Z'] as const).map((axis, index) => (
+                  <label key={axis}>{axis}
+                    <input type="number" step="0.1" value={selectedDevice.transform.position[index]} onChange={(event) => {
+                      const position = [...selectedDevice.transform.position] as [number, number, number];
+                      position[index] = Number(event.target.value) || 0;
+                      useHomeLabStore.getState().updateDevice(selectedDevice.id, { transform: { ...selectedDevice.transform, position } });
+                    }} />
+                  </label>
+                ))}
+              </div>
+              <label>ROTAÇÃO (GRAUS)</label>
+              <div className="inspector-transform-grid">
+                {(['X', 'Y', 'Z'] as const).map((axis, index) => (
+                  <label key={axis}>{axis}
+                    <input type="number" step="5" value={Math.round(selectedDevice.transform.rotation[index] * 180 / Math.PI)} onChange={(event) => {
+                      const rotation = [...selectedDevice.transform.rotation] as [number, number, number];
+                      rotation[index] = (Number(event.target.value) || 0) * Math.PI / 180;
+                      useHomeLabStore.getState().updateDevice(selectedDevice.id, { transform: { ...selectedDevice.transform, rotation } });
+                    }} />
+                  </label>
+                ))}
+              </div>
               <button className="homelab-delete-button" type="button" onClick={() => removeDevice(selectedDevice.id)}><Trash2 size={15} /> Remover dispositivo</button>
             </div>
           ) : activeRoom ? (
