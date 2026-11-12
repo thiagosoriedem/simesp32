@@ -74,7 +74,16 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     if (drag.kind === 'room') {
       const x = Math.round((drag.origin.x + point.x - drag.start.x) / GRID) * GRID;
       const z = Math.round((drag.origin.z + point.z - drag.start.z) / GRID) * GRID;
-      onUpdateRoom(drag.roomId, { x, z });
+      const movingRoom = rooms.find((room) => room.id === drag.roomId);
+      if (!movingRoom) return;
+      const overlapsRoom = rooms.some((room) => {
+        if (room.id === drag.roomId) return false;
+        const otherX = room.position?.x ?? 0;
+        const otherZ = room.position?.z ?? 0;
+        return Math.abs(x - otherX) < (movingRoom.width + room.width) / 2 - 0.02
+          && Math.abs(z - otherZ) < (movingRoom.depth + room.depth) / 2 - 0.02;
+      });
+      if (!overlapsRoom) onUpdateRoom(drag.roomId, { x, z });
       return;
     }
     const room = rooms.find((entry) => entry.id === drag.roomId);
@@ -86,7 +95,10 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     const length = horizontal ? room.width : room.depth;
     const offset = Math.max(-length / 2 + opening.width / 2 + 0.05,
       Math.min(length / 2 - opening.width / 2 - 0.05, value - center));
-    onUpdateOpening(room.id, opening.id, Math.round(offset / GRID) * GRID);
+    const snappedOffset = Math.round(offset / GRID) * GRID;
+    const collides = (room.openings ?? []).some((other) => other.id !== opening.id && other.wall === drag.wall
+      && Math.abs(snappedOffset - other.offset) < (opening.width + other.width) / 2 + 0.05);
+    if (!collides) onUpdateOpening(room.id, opening.id, snappedOffset);
   };
 
   const renderOpening = (room: HomeRoom, opening: RoomOpening) => {
