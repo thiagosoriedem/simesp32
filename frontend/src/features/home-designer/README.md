@@ -5,6 +5,10 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 ## Implementado
 
 - Cena Three.js via React Three Fiber e Drei.
+- Alternância entre visualização 3D, planta baixa 2D do cômodo ativo e visão geral da residência.
+- Planta baixa 2D em SVG com paredes, portas, janelas, móveis e dispositivos IoT.
+- Seleção e reposicionamento por arraste na planta 2D; móveis passam pela mesma validação geométrica de colisões e limites usada no editor 3D.
+- Grade de posicionamento de 25 cm na planta 2D; alterações atualizam os mesmos objetos Zustand usados pela cena 3D.
 - Ambientes independentes com seleção na barra lateral.
 - Edição de nome, largura, profundidade e pé-direito do ambiente.
 - Atualização da geometria 3D conforme as dimensões do ambiente ativo.
@@ -43,11 +47,12 @@ As dependências 3D estão declaradas em `frontend/package.json`. No diretório 
 
 ## Próximos passos
 
-1. Validar colisões entre aberturas e conexões de cômodos com diferentes dimensões e níveis.
-2. Melhorar o posicionamento de dispositivos com encaixe à grade, limites do cômodo e arrastar diretamente sobre o piso.
-3. Modelos 3D residenciais mais detalhados e refinamento das zonas de circulação junto a portas e janelas.
-4. Vínculo ESP32/GPIO e eventos do simulador.
-5. API de projetos e sincronização entre dispositivos.
+1. Expandir a planta 2D para a visão geral da residência, com edição e arraste dos cômodos.
+2. Permitir arrastar portas e janelas diretamente pelas paredes e validar sobreposição entre aberturas.
+3. Melhorar o posicionamento de dispositivos com encaixe em paredes, limites e prevenção de colisões.
+4. Modelos 3D residenciais mais detalhados e refinamento das zonas de circulação junto a portas e janelas.
+5. Vínculo ESP32/GPIO e eventos do simulador.
+6. API de projetos e sincronização entre dispositivos.
 
 A cena não se comunica diretamente com QEMU. A futura integração deverá passar pela camada de adaptadores e eventos descrita em `docs/HOMELAB_FOUNDATION.md`.
 
@@ -57,4 +62,5 @@ A cena não se comunica diretamente com QEMU. A futura integração deverá pass
 - A edição de aberturas limita dimensões e posição à parede; ainda não há validação de colisão entre duas aberturas sobrepostas.
 - O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
 - Os modelos 3D de dispositivos e móveis são primitivas provisórias. A prevenção de colisões usa caixas delimitadoras retangulares aproximadas, não malhas detalhadas; ainda não existe física, detecção de colisão entre móveis e dispositivos IoT, nem validação de passagem para todos os tipos de abertura.
+- Na planta 2D, móveis e dispositivos no piso podem ser arrastados; a grade de 25 cm é aplicada ao posicionamento. Dispositivos fixados em paredes não podem ser arrastados nessa vista. A planta 2D ainda edita somente o cômodo ativo e não oferece pan/zoom dedicado;
 - A transformação de dispositivos no piso é feita pelo gizmo de eixos; os dispositivos fixados em paredes usam controles de parede/posição/altura. Ainda não há prevenção de colisões entre objetos.
