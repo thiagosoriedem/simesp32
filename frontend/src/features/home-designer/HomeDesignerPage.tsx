@@ -209,7 +209,6 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
   const project = useHomeLabStore((state) => state.project);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
   const selectedFurnitureId = useHomeLabStore((state) => state.selectedFurnitureId);
-  const selectedFurnitureId = useHomeLabStore((state) => state.selectedFurnitureId);
   const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
   const selectFurniture = useHomeLabStore((state) => state.selectFurniture);
@@ -264,6 +263,7 @@ export function HomeDesignerPage() {
   const removeFurniture = useHomeLabStore((state) => state.removeFurniture);
   const removeDevice = useHomeLabStore((state) => state.removeDevice);
   const selectedDeviceId = useHomeLabStore((state) => state.selectedDeviceId);
+  const selectedFurnitureId = useHomeLabStore((state) => state.selectedFurnitureId);
   const selectedRoomId = useHomeLabStore((state) => state.selectedRoomId);
   const selectDevice = useHomeLabStore((state) => state.selectDevice);
   const selectRoom = useHomeLabStore((state) => state.selectRoom);
