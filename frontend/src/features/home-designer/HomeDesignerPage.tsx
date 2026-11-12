@@ -5,7 +5,7 @@ import { ArrowLeft, Box, Lightbulb, Plus, RotateCcw, Save, Settings2, Trash2, Wi
 import { useHomeLabStore } from './store';
 import type { DeviceTransform, HomeLabDeviceType, SmartDevice } from './types';
 import type { Group } from 'three';
-import './HomeDesignerPage.css';
+import './HomeDesignerPage.css';\nimport { HouseOverviewScene } from './HouseOverviewScene';
 
 const PROJECT_ID = 'homelab-demo-project';
 const ROOM_ID = 'living-room';
@@ -129,7 +129,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
 }
 
 export function HomeDesignerPage() {
-  const [transformMode, setTransformMode] = useState<TransformMode>('translate');
+  const [transformMode, setTransformMode] = useState<TransformMode>('translate');\n  const [houseOverview, setHouseOverview] = useState(false);
   const project = useHomeLabStore((state) => state.project);
   const projectName = useHomeLabStore((state) => state.project?.name ?? 'Novo projeto residencial');
   const renameProject = useHomeLabStore((state) => state.renameProject);
@@ -225,27 +225,27 @@ export function HomeDesignerPage() {
 
         <section className="homelab-main">
           <div className="homelab-scene-toolbar">
-            <div><span className="breadcrumb-muted">Projetos</span><span className="breadcrumb-separator">/</span><strong>{roomName}</strong></div>
+            <div><span className="breadcrumb-muted">Projetos</span><span className="breadcrumb-separator">/</span><strong>{houseOverview ? 'Visão da casa' : roomName}</strong></div>
             <div className="scene-tools">
-              {selectedDevice && (
+              <div className="homelab-view-toggle" role="group" aria-label="Modo de visualização">\n                <button type="button" className={!houseOverview ? 'active' : ''} onClick={() => setHouseOverview(false)}>Editar cômodo</button>\n                <button type="button" className={houseOverview ? 'active' : ''} onClick={() => { setHouseOverview(true); selectDevice(null); }}>Visão da casa</button>\n              </div>\n              {selectedDevice && !houseOverview && (
                 <div className="homelab-transform-tools" role="group" aria-label="Ferramenta de transformação">
                   <button type="button" className={transformMode === 'translate' ? 'active' : ''} onClick={() => setTransformMode('translate')}>Mover</button>
                   <button type="button" className={transformMode === 'rotate' ? 'active' : ''} onClick={() => setTransformMode('rotate')}>Girar</button>
                   <button type="button" className={transformMode === 'scale' ? 'active' : ''} onClick={() => setTransformMode('scale')}>Escala</button>
                 </div>
               )}
-              <span className="scene-hint">Arraste os eixos para transformar · Scroll para zoom</span>
+              <span className="scene-hint">{houseOverview ? 'Planta geral · selecione um cômodo ou dispositivo' : 'Arraste os eixos para transformar · Scroll para zoom'}</span>
               <button type="button" title="Restaurar câmera" onClick={() => window.location.reload()}><RotateCcw size={15} /></button>
             </div>
           </div>
           <div className="homelab-canvas-wrap">
             <Canvas shadows camera={{ position: [8, 7, 9], fov: 42 }} dpr={[1, 2]}>
-              <RoomScene transformMode={transformMode} />
+              {houseOverview ? <HouseOverviewScene /> : <RoomScene transformMode={transformMode} />}
             </Canvas>
-            <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> VISUALIZAÇÃO 3D <span>·</span> {roomDevices.length} dispositivos</div>
-            <div className="homelab-canvas-controls"><span>3D</span><span>Perspectiva</span></div>
+            <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> {houseOverview ? 'PLANTA GERAL' : 'VISUALIZAÇÃO 3D'} <span>·</span> {houseOverview ? (activeProject?.rooms.length ?? 0) + ' ambientes · ' + (activeProject?.devices.length ?? 0) + ' dispositivos' : roomDevices.length + ' dispositivos'}</div>
+            <div className="homelab-canvas-controls"><span>{houseOverview ? 'CASA' : '3D'}</span><span>{houseOverview ? 'Visão geral' : 'Perspectiva'}</span></div>
           </div>
-          <footer className="homelab-bottom-bar"><span><kbd>Botão esquerdo</kbd> Orbitar</span><span><kbd>Scroll</kbd> Zoom</span><span><kbd>Clique</kbd> Selecionar dispositivo</span><span className="homelab-dimensions">{activeRoom ? `${activeRoom.width.toFixed(1)} × ${activeRoom.depth.toFixed(1)} m` : 'Sem ambiente'}</span></footer>
+          <footer className="homelab-bottom-bar"><span><kbd>Botão esquerdo</kbd> Orbitar</span><span><kbd>Scroll</kbd> Zoom</span><span><kbd>Clique</kbd> Selecionar dispositivo</span><span className="homelab-dimensions">{houseOverview ? `${activeProject?.rooms.length ?? 0} ambientes` : activeRoom ? `${activeRoom.width.toFixed(1)} × ${activeRoom.depth.toFixed(1)} m` : 'Sem ambiente'}</span></footer>
         </section>
 
         <aside className="homelab-inspector">
