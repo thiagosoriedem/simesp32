@@ -130,7 +130,8 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
 }
 
 export function HomeDesignerPage() {
-  const [transformMode, setTransformMode] = useState<TransformMode>('translate');\n  const [houseOverview, setHouseOverview] = useState(false);
+  const [transformMode, setTransformMode] = useState<TransformMode>('translate');
+  const [houseOverview, setHouseOverview] = useState(false);
   const project = useHomeLabStore((state) => state.project);
   const projectName = useHomeLabStore((state) => state.project?.name ?? 'Novo projeto residencial');
   const renameProject = useHomeLabStore((state) => state.renameProject);
@@ -230,7 +231,9 @@ export function HomeDesignerPage() {
             <div className="scene-tools">
               <div className="homelab-view-toggle" role="group" aria-label="Modo de visualização">
                 <button type="button" className={!houseOverview ? 'active' : ''} onClick={() => setHouseOverview(false)}>Editar cômodo</button>
-                <button type="button" className={houseOverview ? 'active' : ''} onClick={() => { setHouseOverview(true); selectDevice(null); }}>Visão da casa</button>\n              </div>\n              {selectedDevice && !houseOverview && (
+                <button type="button" className={houseOverview ? 'active' : ''} onClick={() => { setHouseOverview(true); selectDevice(null); }}>Visão da casa</button>
+              </div>
+              {selectedDevice && !houseOverview && (
                 <div className="homelab-transform-tools" role="group" aria-label="Ferramenta de transformação">
                   <button type="button" className={transformMode === 'translate' ? 'active' : ''} onClick={() => setTransformMode('translate')}>Mover</button>
                   <button type="button" className={transformMode === 'rotate' ? 'active' : ''} onClick={() => setTransformMode('rotate')}>Girar</button>
