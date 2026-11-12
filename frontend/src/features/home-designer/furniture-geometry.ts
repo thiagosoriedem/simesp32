@@ -50,6 +50,17 @@ export function resolveFurnitureTransform(
   return collision ? item.transform : bounded;
 }
 
+function isPlacementFree(item: HomeFurniture, transform: DeviceTransform, room: HomeRoom, furniture: HomeFurniture[]): boolean {
+  const footprint = getFootprint(item, transform);
+  const inside = footprint.minX >= -room.width / 2 + WALL_CLEARANCE
+    && footprint.maxX <= room.width / 2 - WALL_CLEARANCE
+    && footprint.minZ >= -room.depth / 2 + WALL_CLEARANCE
+    && footprint.maxZ <= room.depth / 2 - WALL_CLEARANCE
+    && item.size.height * Math.abs(transform.scale[1]) <= room.height;
+  return inside && !furniture.some((other) => other.id !== item.id
+    && overlaps(footprint, getFootprint(other, other.transform)));
+}
+
 export function findFurniturePlacement(
   item: HomeFurniture,
   room: HomeRoom,
@@ -73,14 +84,7 @@ export function findFurniturePlacement(
             Math.max(-maxZ, Math.min(maxZ, row * step)),
           ],
         };
-        const resolved = resolveFurnitureTransform(item, candidate, room, furniture);
-        if (resolved !== item.transform) return resolved;
-        if (candidate.position[0] === item.transform.position[0]
-          && candidate.position[2] === item.transform.position[2]
-          && !furniture.some((other) => other.id !== item.id
-            && overlaps(getFootprint(item, candidate), getFootprint(other, other.transform)))) {
-          return candidate;
-        }
+        if (isPlacementFree(item, candidate, room, furniture)) return candidate;
       }
     }
   }
