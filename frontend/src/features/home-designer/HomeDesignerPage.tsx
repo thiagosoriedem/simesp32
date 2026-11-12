@@ -148,8 +148,8 @@ export function HomeDesignerPage() {
         <div className="homelab-brand-mark"><Box size={18} /></div>
         <div className="homelab-brand-copy"><strong>HomeLab Studio</strong><span>Projetista residencial</span></div>
         <div className="homelab-topbar-spacer" />
-        <span className="homelab-save-status"><span /> Projeto local</span>
-        <button className="homelab-top-button" type="button" onClick={() => window.alert('Salvamento em nuvem será conectado na próxima etapa.')}><Save size={15} /> Salvar</button>
+        <span className="homelab-save-status"><span /> Salvamento automático</span>
+        <button className="homelab-top-button" type="button" onClick={() => window.alert('Projeto salvo automaticamente neste navegador.')}><Save size={15} /> Salvar</button>
       </header>
 
       <div className="homelab-workspace">
@@ -189,7 +189,7 @@ export function HomeDesignerPage() {
             <Canvas shadows camera={{ position: [8, 7, 9], fov: 42 }} dpr={[1, 2]}>
               <RoomScene />
             </Canvas>
-            <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> VISUALIZAÇÃO 3D <span>·</span> {activeProject?.devices.length ?? 0} dispositivos</div>
+            <div className="homelab-canvas-caption"><span className="canvas-live-dot" /> VISUALIZAÇÃO 3D <span>·</span> {roomDevices.length} dispositivos</div>
             <div className="homelab-canvas-controls"><span>3D</span><span>Perspectiva</span></div>
           </div>
           <footer className="homelab-bottom-bar"><span><kbd>Botão esquerdo</kbd> Orbitar</span><span><kbd>Scroll</kbd> Zoom</span><span><kbd>Clique</kbd> Selecionar dispositivo</span><span className="homelab-dimensions">{activeRoom ? `${activeRoom.width.toFixed(1)} × ${activeRoom.depth.toFixed(1)} m` : 'Sem ambiente'}</span></footer>
