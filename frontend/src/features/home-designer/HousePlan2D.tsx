@@ -10,9 +10,10 @@ interface HousePlan2DProps {
   onUpdateOpening: (roomId: string, openingId: string, offset: number) => void;
 }
 
+type DragMapping = { scale: number; originX: number; originY: number };
 type DragState =
-  | { kind: 'room'; roomId: string; start: { x: number; z: number }; origin: { x: number; z: number } }
-  | { kind: 'opening'; roomId: string; openingId: string; wall: WallSide }
+  | ({ kind: 'room'; roomId: string; start: { x: number; z: number }; origin: { x: number; z: number } } & DragMapping)
+  | ({ kind: 'opening'; roomId: string; openingId: string; wall: WallSide } & DragMapping)
   | null;
 
 const GRID = 0.25;
@@ -34,7 +35,7 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
   const px = (x: number) => originX + x * scale;
   const py = (z: number) => originY + z * scale;
 
-  const toWorld = (event: ReactPointerEvent<SVGSVGElement>) => {
+  const toWorld = (event: ReactPointerEvent<SVGSVGElement>, mapping: DragMapping = { scale, originX, originY }) => {
     const svg = svgRef.current;
     const matrix = svg?.getScreenCTM();
     if (!svg || !matrix) return null;
@@ -42,7 +43,7 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     point.x = event.clientX;
     point.y = event.clientY;
     const local = point.matrixTransform(matrix.inverse());
-    return { x: (local.x - originX) / scale, z: (local.y - originY) / scale };
+    return { x: (local.x - mapping.originX) / mapping.scale, z: (local.y - mapping.originY) / mapping.scale };
   };
 
   const pointerDownRoom = (event: ReactPointerEvent<SVGGElement>, room: HomeRoom) => {
@@ -53,6 +54,7 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
     dragRef.current = {
       kind: 'room', roomId: room.id, start: point,
       origin: { x: room.position?.x ?? 0, z: room.position?.z ?? 0 },
+      scale, originX, originY,
     };
     svgRef.current?.setPointerCapture(event.pointerId);
   };
@@ -60,14 +62,14 @@ export function HousePlan2D({ rooms, selectedRoomId, onSelectRoom, onUpdateRoom,
   const pointerDownOpening = (event: ReactPointerEvent<SVGElement>, room: HomeRoom, opening: RoomOpening) => {
     event.stopPropagation();
     onSelectRoom(room.id);
-    dragRef.current = { kind: 'opening', roomId: room.id, openingId: opening.id, wall: opening.wall };
+    dragRef.current = { kind: 'opening', roomId: room.id, openingId: opening.id, wall: opening.wall, scale, originX, originY };
     svgRef.current?.setPointerCapture(event.pointerId);
   };
 
   const pointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
     const drag = dragRef.current;
     if (!drag) return;
-    const point = toWorld(event);
+    const point = toWorld(event, drag);
     if (!point) return;
     if (drag.kind === 'room') {
       const x = Math.round((drag.origin.x + point.x - drag.start.x) / GRID) * GRID;
