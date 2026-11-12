@@ -22,3 +22,6 @@
 .homelab-opening-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .homelab-opening-fields label{display:flex;flex-direction:column;gap:4px;margin:0!important;color:#91a1b6!important;font-size:9px!important}
 .homelab-opening-help{color:#718198;font-size:8px;line-height:1.45}
+
+
+.homelab-room-position-note{color:#91a1b6;font-size:9px;line-height:1.5}
