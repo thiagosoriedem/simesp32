@@ -12,6 +12,7 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Catálogo de dispositivos IoT: ESP32, lâmpada, PIR, interruptor, tomada, televisão e ar-condicionado.
 - Biblioteca de móveis e objetos: cama, sofá, mesa, cadeira, guarda-roupa, geladeira, pia/bancada e chuveiro.
 - Móveis/objetos possuem modelo de dados próprio (`HomeFurniture`), separado de dispositivos IoT, com dimensões editáveis, seleção, transformação 3D e persistência local.
+- A posição inicial e as dimensões informadas são limitadas ao tamanho do cômodo; a movimentação posterior pelo gizmo ainda não possui bloqueio de limites ou colisões.
 - Móveis e objetos aparecem tanto na edição do cômodo quanto na visão geral da residência.
 - Seleção de dispositivos e painel de propriedades.
 - Gizmo 3D para mover, girar e redimensionar o dispositivo selecionado.
