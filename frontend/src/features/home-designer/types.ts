@@ -76,11 +76,24 @@ export interface HomeRoom {
   openings?: RoomOpening[];
 }
 
+export type FurnitureType = 'bed' | 'sofa' | 'table' | 'chair' | 'wardrobe' | 'refrigerator' | 'sink' | 'shower';
+
+export interface HomeFurniture {
+  id: string;
+  projectId: string;
+  roomId: string;
+  type: FurnitureType;
+  name: string;
+  transform: DeviceTransform;
+  size: { width: number; depth: number; height: number };
+}
+
 export interface HomeLabProject {
   id: string;
   name: string;
   rooms: HomeRoom[];
   devices: SmartDevice[];
+  furniture?: HomeFurniture[];
   updatedAt: string;
 }
 
