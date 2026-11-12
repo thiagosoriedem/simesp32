@@ -8,6 +8,7 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Alternância entre visualização 3D do cômodo, planta baixa 2D do cômodo ativo, planta geral 2D editável e visão geral 3D da residência.
 - Planta baixa 2D em SVG com paredes, portas, janelas, móveis e dispositivos IoT.
 - Planta geral 2D em SVG com arraste de cômodos e reposicionamento de portas/janelas diretamente nas paredes; usa as coordenadas e aberturas já persistidas no modelo dos ambientes.
+- Navegação da planta geral com zoom de 35% a 300%, controles de aproximação/afastamento e pan por arraste no fundo; o mapeamento de coordenadas considera a transformação visual para manter o arraste dos cômodos e aberturas preciso.
 - Seleção e reposicionamento por arraste na planta 2D; móveis passam pela mesma validação geométrica de colisões e limites usada no editor 3D.
 - Grade de posicionamento de 25 cm na planta 2D; alterações atualizam os mesmos objetos Zustand usados pela cena 3D.
 - Ambientes independentes com seleção na barra lateral.
@@ -64,5 +65,5 @@ A cena não se comunica diretamente com QEMU. A futura integração deverá pass
 - O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
 - Os modelos 3D de dispositivos e móveis são primitivas provisórias. A prevenção de colisões usa caixas delimitadoras retangulares aproximadas, não malhas detalhadas; ainda não existe física, detecção de colisão entre móveis e dispositivos IoT, nem validação de passagem para todos os tipos de abertura.
 - Na planta 2D do cômodo, móveis e dispositivos no piso podem ser arrastados; a grade de 25 cm é aplicada ao posicionamento. Dispositivos fixados em paredes não podem ser arrastados nessa vista. A planta do cômodo ainda não oferece pan/zoom dedicado;
-- Na planta geral 2D, cômodos podem ser arrastados e portas/janelas reposicionadas nas paredes com grade de 25 cm. O arraste impede sobreposição entre cômodos e entre aberturas da mesma parede. Ainda não há pan/zoom dedicado;
+- Na planta geral 2D, cômodos podem ser arrastados e portas/janelas reposicionadas nas paredes com grade de 25 cm. O arraste impede sobreposição entre cômodos e entre aberturas da mesma parede. O pan/zoom está disponível, mas ainda não há cotas externas completas nem ferramenta de enquadramento automático baseada na seleção;
 - A transformação de dispositivos no piso é feita pelo gizmo de eixos; os dispositivos fixados em paredes usam controles de parede/posição/altura. Ainda não há prevenção de colisões entre objetos.
