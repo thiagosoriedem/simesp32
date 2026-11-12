@@ -48,7 +48,7 @@ As dependências 3D estão declaradas em `frontend/package.json`. No diretório 
 
 ## Próximos passos
 
-1. Validar a planta geral 2D com cômodos próximos, sobrepostos e aberturas em paredes diferentes; implementar prevenção de sobreposição entre cômodos e aberturas.
+1. Validar a prevenção de sobreposição entre cômodos e aberturas em paredes diferentes, incluindo cômodos encostados e arrastes rápidos.
 2. Adicionar pan/zoom e cotas dimensionais na planta geral.
 3. Melhorar o posicionamento de dispositivos com encaixe em paredes, limites e prevenção de colisões.
 4. Modelos 3D residenciais mais detalhados e refinamento das zonas de circulação junto a portas e janelas.
@@ -64,5 +64,5 @@ A cena não se comunica diretamente com QEMU. A futura integração deverá pass
 - O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
 - Os modelos 3D de dispositivos e móveis são primitivas provisórias. A prevenção de colisões usa caixas delimitadoras retangulares aproximadas, não malhas detalhadas; ainda não existe física, detecção de colisão entre móveis e dispositivos IoT, nem validação de passagem para todos os tipos de abertura.
 - Na planta 2D do cômodo, móveis e dispositivos no piso podem ser arrastados; a grade de 25 cm é aplicada ao posicionamento. Dispositivos fixados em paredes não podem ser arrastados nessa vista. A planta do cômodo ainda não oferece pan/zoom dedicado;
-- Na planta geral 2D, cômodos podem ser arrastados e portas/janelas reposicionadas nas paredes com grade de 25 cm. Ainda não há prevenção de sobreposição entre cômodos nem entre aberturas, e não há pan/zoom dedicado;
+- Na planta geral 2D, cômodos podem ser arrastados e portas/janelas reposicionadas nas paredes com grade de 25 cm. O arraste impede sobreposição entre cômodos e entre aberturas da mesma parede. Ainda não há pan/zoom dedicado;
 - A transformação de dispositivos no piso é feita pelo gizmo de eixos; os dispositivos fixados em paredes usam controles de parede/posição/altura. Ainda não há prevenção de colisões entre objetos.
