@@ -18,13 +18,13 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Estado do projeto, ambientes e dispositivos em Zustand.
 - Salvamento automático do estado no armazenamento local do navegador via persist middleware do Zustand.
 
-## Dependências
-
-As dependências 3D estão declaradas em `frontend/package.json`. No diretório `frontend`, execute `npm install` para instalá-las e atualizar o lockfile local (o repositório não contém `frontend/package-lock.json`).
-
 - Alternância entre edição individual e visão geral da residência.
 - Planta geral automática em grade de até duas colunas, com cômodos identificados e dispositivos exibidos em seus ambientes.
 - Seleção de cômodos e dispositivos na visão geral; transformações continuam disponíveis no modo de edição individual.
+
+## Dependências
+
+As dependências 3D estão declaradas em `frontend/package.json`. No diretório `frontend`, execute `npm install` para instalá-las e atualizar o lockfile local (o repositório não contém `frontend/package-lock.json`).
 
 ## Próximos passos
 
