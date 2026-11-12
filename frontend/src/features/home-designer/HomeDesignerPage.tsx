@@ -507,6 +507,7 @@ export function HomeDesignerPage() {
                 selectedRoomId={activeRoom?.id ?? null}
                 onSelectRoom={(id) => selectRoom(id)}
                 onUpdateRoom={(id, position) => updateRoom(id, { position })}
+                onResizeRoom={(id, patch) => updateRoom(id, patch)}
                 onUpdateOpening={(roomId, openingId, offset) => {
                   const room = activeProject.rooms.find((entry) => entry.id === roomId);
                   if (!room) return;
