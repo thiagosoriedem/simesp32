@@ -12,7 +12,10 @@ Módulo residencial 3D do HomeLab Studio, acessível pela rota `/homelab`.
 - Catálogo de dispositivos IoT: ESP32, lâmpada, PIR, interruptor, tomada, televisão e ar-condicionado.
 - Biblioteca de móveis e objetos: cama, sofá, mesa, cadeira, guarda-roupa, geladeira, pia/bancada e chuveiro.
 - Móveis/objetos possuem modelo de dados próprio (`HomeFurniture`), separado de dispositivos IoT, com dimensões editáveis, seleção, transformação 3D e persistência local.
-- A posição inicial e as dimensões informadas são limitadas ao tamanho do cômodo; a movimentação posterior pelo gizmo ainda não possui bloqueio de limites ou colisões.
+- A posição inicial é escolhida por busca em grade, respeitando o espaço livre do cômodo.
+- Móveis podem ser reposicionados arrastando o piso após selecionar o item; gizmo e arraste passam por validação geométrica.
+- A validação considera dimensões, escala, rotação no eixo Y, limites internos do cômodo, afastamento de paredes, colisão entre móveis e uma faixa livre de 85 cm diante de portas.
+- A checagem de colisões é isolada por cômodo; móveis de ambientes diferentes não colidem entre si.
 - Móveis e objetos aparecem tanto na edição do cômodo quanto na visão geral da residência.
 - Seleção de dispositivos e painel de propriedades.
 - Gizmo 3D para mover, girar e redimensionar o dispositivo selecionado.
@@ -42,7 +45,7 @@ As dependências 3D estão declaradas em `frontend/package.json`. No diretório 
 
 1. Validar colisões entre aberturas e conexões de cômodos com diferentes dimensões e níveis.
 2. Melhorar o posicionamento de dispositivos com encaixe à grade, limites do cômodo e arrastar diretamente sobre o piso.
-3. Modelos 3D residenciais mais detalhados e validação de colisões entre móveis, paredes, portas e janelas.
+3. Modelos 3D residenciais mais detalhados e refinamento das zonas de circulação junto a portas e janelas.
 4. Vínculo ESP32/GPIO e eventos do simulador.
 5. API de projetos e sincronização entre dispositivos.
 
@@ -53,5 +56,5 @@ A cena não se comunica diretamente com QEMU. A futura integração deverá pass
 - A posição dos cômodos é manual por coordenadas. A conexão de portas é inferida na visão geral e ainda não cria uma malha arquitetônica única nem valida todos os casos de sobreposição.
 - A edição de aberturas limita dimensões e posição à parede; ainda não há validação de colisão entre duas aberturas sobrepostas.
 - O projeto é salvo automaticamente no navegador atual; ainda não existe sincronização com backend ou nuvem.
-- Os modelos 3D de dispositivos e móveis são primitivas provisórias; as dimensões dos móveis são editáveis, mas ainda não existe prevenção automática de colisões ou encaixe inteligente.
+- Os modelos 3D de dispositivos e móveis são primitivas provisórias. A prevenção de colisões usa caixas delimitadoras retangulares aproximadas, não malhas detalhadas; ainda não existe física, detecção de colisão entre móveis e dispositivos IoT, nem validação de passagem para todos os tipos de abertura.
 - A transformação de dispositivos no piso é feita pelo gizmo de eixos; os dispositivos fixados em paredes usam controles de parede/posição/altura. Ainda não há prevenção de colisões entre objetos.
