@@ -486,14 +486,14 @@ export function HomeDesignerPage() {
                 <button type="button" className={floorPlan2D ? 'active' : ''} onClick={() => { setHouseOverview(false); setFloorPlan2D(true); }}>Planta 2D</button>
                 <button type="button" className={houseOverview ? 'active' : ''} onClick={() => { setHouseOverview(true); setFloorPlan2D(false); selectDevice(null); }}>Visão da casa</button>
               </div>
-              {(selectedDevice || selectedFurniture) && !houseOverview && (
+              {(selectedDevice || selectedFurniture) && !houseOverview && !floorPlan2D && (
                 <div className="homelab-transform-tools" role="group" aria-label="Ferramenta de transformação">
                   <button type="button" className={transformMode === 'translate' ? 'active' : ''} onClick={() => setTransformMode('translate')}>Mover</button>
                   <button type="button" className={transformMode === 'rotate' ? 'active' : ''} onClick={() => setTransformMode('rotate')}>Girar</button>
                   <button type="button" className={transformMode === 'scale' ? 'active' : ''} onClick={() => setTransformMode('scale')}>Escala</button>
                 </div>
               )}
-              <span className="scene-hint">{houseOverview ? 'Planta geral · selecione um cômodo ou dispositivo' : 'Selecione um móvel e arraste no piso para reposicionar · Scroll para zoom'}</span>
+              <span className="scene-hint">{floorPlan2D ? 'Vista superior · arraste móveis e dispositivos para reposicionar' : houseOverview ? 'Planta geral · selecione um cômodo ou dispositivo' : 'Selecione um móvel e arraste no piso para reposicionar · Scroll para zoom'}</span>
               <button type="button" title="Restaurar câmera" onClick={() => window.location.reload()}><RotateCcw size={15} /></button>
             </div>
           </div>
