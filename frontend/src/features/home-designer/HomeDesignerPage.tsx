@@ -7,6 +7,7 @@ import type { DeviceTransform, HomeLabDeviceType, SmartDevice } from './types';
 import type { Group } from 'three';
 import './HomeDesignerPage.css';
 import { HouseOverviewScene } from './HouseOverviewScene';
+import { RoomArchitecture } from './RoomArchitecture';
 
 const PROJECT_ID = 'homelab-demo-project';
 const ROOM_ID = 'living-room';
@@ -105,14 +106,7 @@ function RoomScene({ transformMode }: { transformMode: TransformMode }) {
         <planeGeometry args={[width, depth]} />
         <meshStandardMaterial color="#c8c4b8" roughness={0.88} />
       </mesh>
-      <mesh position={[0, height / 2, -depth / 2]} receiveShadow>
-        <boxGeometry args={[width, height, 0.12]} />
-        <meshStandardMaterial color="#e7e5e4" roughness={0.92} />
-      </mesh>
-      <mesh position={[-width / 2, height / 2, 0]} receiveShadow>
-        <boxGeometry args={[0.12, height, depth]} />
-        <meshStandardMaterial color="#d6d3d1" roughness={0.92} />
-      </mesh>
+      {room && <RoomArchitecture room={room} />}
       <Grid position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]} args={[width, depth]} cellSize={0.5} cellThickness={0.5} cellColor="#64748b" sectionSize={1} sectionThickness={0.8} sectionColor="#475569" fadeDistance={20} infiniteGrid={false} />
       {project?.devices.filter((device) => device.roomId === room?.id).map((device) => (
         <DeviceModel
@@ -300,6 +294,17 @@ export function HomeDesignerPage() {
               <input type="number" min="1" max="30" step="0.1" value={activeRoom.depth} onChange={(event) => updateRoom(activeRoom.id, { depth: Math.max(1, Math.min(30, Number(event.target.value) || 1)) })} />
               <label>Pé-direito (metros)</label>
               <input type="number" min="2" max="6" step="0.1" value={activeRoom.height} onChange={(event) => updateRoom(activeRoom.id, { height: Math.max(2, Math.min(6, Number(event.target.value) || 2)) })} />
+              <label>ABERTURAS</label>
+              <div className="homelab-opening-actions">
+                <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'door', wall: 'north', offset: 0, width: 0.9, height: 2.1, sillHeight: 0 }] })}>+ Porta</button>
+                <button type="button" onClick={() => updateRoom(activeRoom.id, { openings: [...(activeRoom.openings ?? []), { id: crypto.randomUUID(), type: 'window', wall: 'north', offset: 0, width: 1.2, height: 1, sillHeight: 0.9 }] })}>+ Janela</button>
+              </div>
+              {(activeRoom.openings ?? []).map((opening) => (
+                <div className="homelab-opening-row" key={opening.id}>
+                  <span>{opening.type === 'door' ? 'Porta' : 'Janela'} · {opening.wall}</span>
+                  <button type="button" aria-label={`Remover ${opening.type === 'door' ? 'porta' : 'janela'}`} onClick={() => updateRoom(activeRoom.id, { openings: (activeRoom.openings ?? []).filter((item) => item.id !== opening.id) })}>Remover</button>
+                </div>
+              ))}
               <div className="inspector-binding"><strong>{roomDevices.length} dispositivos neste ambiente</strong><small>As dimensões atualizam a visualização 3D.</small></div>
             </div>
           ) : (
