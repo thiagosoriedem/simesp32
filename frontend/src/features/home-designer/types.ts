@@ -60,6 +60,7 @@ export interface RoomOpening {
 
 export interface HomeRoom {
   id: string;
+  position?: { x: number; z: number };
   name: string;
   width: number;
   depth: number;
